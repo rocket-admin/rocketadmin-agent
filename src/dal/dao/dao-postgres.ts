@@ -520,8 +520,7 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
           password: password,
           database: database,
           port: port,
-          //todo remove in prod
-          //   ssl: ssl ? { ca: cert } : { rejectUnauthorized: false },
+          ssl: ssl ? { ca: cert } : { rejectUnauthorized: false },
         },
       });
       Cacher.setKnexCache(connectionConfig, newKnex);
