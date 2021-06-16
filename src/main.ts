@@ -5,39 +5,62 @@ import { CommandExecutor } from './command/command-executor';
 import { getConnectionToDbParams } from './helpers/get-connection-to-db-params';
 
 import { OperationTypeEnum } from './enums/operation-type.enum';
+import { Messages } from './text/messages';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(7007);
+  const port = process.env.APP_PORT || 3000;
+  await app.listen(port);
 
-  const ws = new WebSocket('ws://ws-server:8008/');
+  function connect() {
+    const ws = new WebSocket('ws://ws-server:8008/');
 
-  ws.on('open', function open() {
-    const connectionToken = process.env.CONNECTION_TOKEN;
-    const data = {
-      operationType: 'initialConnection',
-      connectionToken: connectionToken,
-    };
-    ws.send(JSON.stringify(data));
-  });
+    ws.on('open', function open() {
+      const connectionToken = process.env.CONNECTION_TOKEN;
+      console.log('-> connected to server');
+      const data = {
+        operationType: 'initialConnection',
+        connectionToken: connectionToken,
+      };
+      ws.send(JSON.stringify(data));
+    });
 
-  ws.on('message', async function incoming(data) {
-    const messageData = JSON.parse(data);
-    const {
-      connectionToken,
-      data: { resId },
-    } = messageData;
+    ws.on('message', async function incoming(data) {
+      const messageData = JSON.parse(data);
+      const {
+        connectionToken,
+        data: { resId },
+      } = messageData;
 
-    const connection = getConnectionToDbParams(connectionToken);
-    const commandExecutor = new CommandExecutor(connection);
-    const result = await commandExecutor.executeCommand(messageData);
-    const responseData = {
-      operationType: OperationTypeEnum.dataFromAgent,
-      commandResult: result,
-      resId: resId,
-    };
-    ws.send(JSON.stringify(responseData));
-  });
+      const connection = getConnectionToDbParams(connectionToken);
+      const commandExecutor = new CommandExecutor(connection);
+      try {
+        const result = await commandExecutor.executeCommand(messageData);
+        const responseData = {
+          operationType: OperationTypeEnum.dataFromAgent,
+          commandResult: result,
+          resId: resId,
+        };
+        ws.send(JSON.stringify(responseData));
+      } catch (e) {
+        ws.send(e);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log(Messages.SOCKET_WAS_DISCONNECTED);
+      setTimeout(function () {
+        connect();
+      }, 1000);
+    });
+
+    ws.on('error', (e) => {
+      console.error(Messages.SOCKET_ENCOUNTERED_ERROR(e.message));
+      ws.close();
+    });
+  }
+
+  connect();
 }
 
 bootstrap();

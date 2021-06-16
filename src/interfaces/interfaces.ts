@@ -1,5 +1,6 @@
 import { FilterCriteriaEnum, QueryOrderingEnum } from '../enums';
 import { WidgetTypeEnum } from '../enums/widget-type.enum';
+import { OperationTypeEnum } from '../enums/operation-type.enum';
 
 export interface IAutocompleteFields {
   fields: Array<string>;
@@ -45,6 +46,22 @@ export interface IForeignKeyInfo {
   column_name: string;
 }
 
+export interface IMessageData {
+  data: IMessageDataInfo;
+}
+export interface IMessageDataInfo {
+  operationType: OperationTypeEnum;
+  tableName: string;
+  row: any;
+  primaryKey: any;
+  tableSettings: ITableSettings;
+  page: number;
+  perPage: number;
+  searchedFieldValue: string;
+  filteringFields: Array<string>;
+  autocompleteFields: Array<string>;
+}
+
 export interface IPaginationRO {
   total: number;
   lastPage: number;
@@ -64,6 +81,7 @@ export interface ITablePrimaryColumnInfo {
   data_type: string;
   column_name: string;
 }
+
 export interface ITableSettings {
   connection_id: string;
   table_name: string;

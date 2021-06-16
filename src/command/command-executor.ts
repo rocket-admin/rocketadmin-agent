@@ -1,6 +1,7 @@
-import { OperationTypeEnum } from '../enums/operation-type.enum';
-import { IConnection } from '../interfaces/interfaces';
 import { createDao } from '../dal/shared/create-dao';
+import { IConnection, IMessageData } from '../interfaces/interfaces';
+import { Messages } from '../text/messages';
+import { OperationTypeEnum } from '../enums/operation-type.enum';
 
 export class CommandExecutor {
   private readonly connectionConfig: IConnection;
@@ -9,7 +10,7 @@ export class CommandExecutor {
     this.connectionConfig = connectionConfig;
   }
 
-  async executeCommand(messageData: any): Promise<any> {
+  async executeCommand(messageData: IMessageData): Promise<any> {
     const dao = createDao(this.connectionConfig);
     const {
       operationType,
@@ -60,7 +61,7 @@ export class CommandExecutor {
       case OperationTypeEnum.validateSettings:
         return await dao.validateSettings(tableSettings, tableName);
       default:
-        return null;
+        throw new Error(Messages.UNKNOWN_OPERATION(operationType));
     }
   }
 }
