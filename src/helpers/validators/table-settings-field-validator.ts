@@ -27,8 +27,6 @@ export function tableSettingsFieldValidator(
   const columnNames = tableStructure.map((column) => {
     return column.column_name;
   });
-  console.log("-> tableStructure", tableStructure);
-  console.log("-> columnNames", columnNames);
 //*******************************************
   if (search_fields && !Array.isArray(search_fields)) {
     errorMessages.push(Messages.MUST_BE_ARRAY(`search_fields`));

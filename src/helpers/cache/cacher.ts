@@ -8,7 +8,6 @@ const driverCache = new LRU(Constants.DEFAULT_DRIVER_CACHE_OPTIONS);
 const tableSettingsCache = new LRU(Constants.DEFAULT_SETTINGS_CACHE_OPTIONS);
 
 export class Cacher {
-
   public static getCachedKnex(connectionConfig): any {
     const cachedKnex = knexCache.get(JSON.stringify(connectionConfig));
     return cachedKnex ? cachedKnex : null;

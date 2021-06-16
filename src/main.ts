@@ -13,7 +13,7 @@ async function bootstrap() {
   await app.listen(port);
 
   function connect() {
-    const ws = new WebSocket('ws://ws-server:8008/');
+    const ws = new WebSocket('ws://ws-server:8009/');
 
     ws.on('open', function open() {
       const connectionToken = process.env.CONNECTION_TOKEN;
