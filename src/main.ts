@@ -13,7 +13,7 @@ async function bootstrap() {
   await app.listen(port);
 
   function connect() {
-    const ws = new WebSocket('ws://ws-server:8009/');
+    const ws = new WebSocket('wss://ws.autoadmin.org:443/');
 
     ws.on('open', function open() {
       const connectionToken = process.env.CONNECTION_TOKEN;
@@ -49,7 +49,7 @@ async function bootstrap() {
 
     ws.on('close', () => {
       console.log(Messages.SOCKET_WAS_DISCONNECTED);
-      setTimeout(function () {
+      setTimeout(function() {
         connect();
       }, 1000);
     });
@@ -60,6 +60,8 @@ async function bootstrap() {
     });
   }
 
+  console.log('-> Application started');
   connect();
 }
+
 bootstrap();

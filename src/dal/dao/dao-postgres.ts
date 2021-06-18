@@ -497,7 +497,6 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
     if (cachedKnex) {
       return cachedKnex;
     } else {
-      //if (true) {
       if (process.env.NODE_ENV === 'test') {
         const newKnex = knex({
           client: type,
