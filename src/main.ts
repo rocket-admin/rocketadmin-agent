@@ -17,7 +17,7 @@ async function bootstrap() {
 
     ws.on('open', function open() {
       const connectionToken = process.env.CONNECTION_TOKEN;
-      console.log('-> connected to server');
+      console.log('-> Connected to the server');
       const data = {
         operationType: 'initialConnection',
         connectionToken: connectionToken,
@@ -49,7 +49,7 @@ async function bootstrap() {
 
     ws.on('close', () => {
       console.log(Messages.SOCKET_WAS_DISCONNECTED);
-      setTimeout(function() {
+      setTimeout(() => {
         connect();
       }, 1000);
     });

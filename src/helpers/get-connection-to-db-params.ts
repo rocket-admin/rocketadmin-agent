@@ -10,7 +10,7 @@ export function getConnectionToDbParams(token: string): IConnection {
   const port = parseInt(process.env.CONNECTION_PORT);
   const sshPort = parseInt(process.env.CONNECTION_SSH_PORT);
   const connection = {
-    type: process.env.CONNECTION_TYPE,
+    type: process.env.CONNECTION_TYPE.toLowerCase(),
     host: process.env.CONNECTION_HOST,
     port: port ? port : null,
     username: process.env.CONNECTION_USERNAME,
