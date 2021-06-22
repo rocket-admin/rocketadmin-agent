@@ -497,20 +497,6 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
     if (cachedKnex) {
       return cachedKnex;
     } else {
-      if (process.env.NODE_ENV === 'test') {
-        const newKnex = knex({
-          client: type,
-          connection: {
-            host: host,
-            user: username,
-            password: password,
-            database: database,
-            port: port,
-          },
-        });
-        Cacher.setKnexCache(connectionConfig, newKnex);
-        return newKnex;
-      }
       const newKnex = knex({
         client: type,
         connection: {
@@ -519,7 +505,7 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
           password: password,
           database: database,
           port: port,
-          ssl: ssl ? { ca: cert } : { rejectUnauthorized: false },
+          //ssl: ssl ? { ca: cert } : { rejectUnauthorized: false },
         },
       });
       Cacher.setKnexCache(connectionConfig, newKnex);

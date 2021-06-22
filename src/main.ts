@@ -43,7 +43,7 @@ async function bootstrap() {
         };
         ws.send(JSON.stringify(responseData));
       } catch (e) {
-        ws.send(e);
+        ws.send(JSON.stringify(e));
       }
     });
 
