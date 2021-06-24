@@ -47,8 +47,13 @@ async function bootstrap() {
       }
     });
 
-    ws.on('close', () => {
-      console.log(Messages.SOCKET_WAS_DISCONNECTED);
+    ws.on('close', (code, reason) => {
+      console.log(
+        `${Messages.SOCKET_WAS_DISCONNECTED} ${
+          code ? ` With code: ${code} ` : ' '
+        }`,
+        reason ? `Reason: ${reason}` : '',
+      );
       setTimeout(() => {
         connect();
       }, 1000);
