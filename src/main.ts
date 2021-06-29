@@ -28,11 +28,10 @@ async function bootstrap() {
     ws.on('message', async function incoming(data) {
       const messageData = JSON.parse(data);
       const {
-        connectionToken,
         data: { resId },
       } = messageData;
 
-      const connection = getConnectionToDbParams(connectionToken);
+      const connection = getConnectionToDbParams();
       const commandExecutor = new CommandExecutor(connection);
       try {
         const result = await commandExecutor.executeCommand(messageData);

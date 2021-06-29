@@ -2,11 +2,8 @@ import { validateConnectionData } from './validate-connection-data';
 import { toPrettyErrorsMsg } from './to-pretty-errors-msg';
 import { IConnection } from '../interfaces/interfaces';
 
-export function getConnectionToDbParams(token: string): IConnection {
+export function getConnectionToDbParams(): IConnection {
   const connectionToken = process.env.CONNECTION_TOKEN;
-  if (connectionToken !== token) {
-    return null;
-  }
   const port = parseInt(process.env.CONNECTION_PORT);
   const sshPort = parseInt(process.env.CONNECTION_SSH_PORT);
   const connection = {
