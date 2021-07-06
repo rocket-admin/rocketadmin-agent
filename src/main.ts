@@ -6,6 +6,7 @@ import { getConnectionToDbParams } from './helpers/get-connection-to-db-params';
 
 import { OperationTypeEnum } from './enums/operation-type.enum';
 import { Messages } from './text/messages';
+import { checkConnection } from './helpers/check-connection';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,7 +18,7 @@ async function bootstrap() {
 
     ws.on('open', function open() {
       const connectionToken = process.env.CONNECTION_TOKEN;
-      console.log('-> Connected to the server');
+      console.log('-> Connected to the remote server');
       const data = {
         operationType: 'initialConnection',
         connectionToken: connectionToken,
@@ -30,8 +31,6 @@ async function bootstrap() {
       const {
         data: { resId },
       } = messageData;
-
-      const connection = getConnectionToDbParams();
       const commandExecutor = new CommandExecutor(connection);
       try {
         const result = await commandExecutor.executeCommand(messageData);
@@ -65,6 +64,34 @@ async function bootstrap() {
   }
 
   console.log('-> Application started');
+  const connection = getConnectionToDbParams();
+
+  async function tryConnectToDatabase(timeout = 2000) {
+    if (await checkConnection(connection)) {
+      return;
+    }
+    let counter = 0;
+    setTimeout(async function run() {
+      timeout += 2000;
+      ++counter;
+      const tryResult = await checkConnection(connection);
+      if (tryResult) {
+        return;
+      } else {
+        if (counter >= 6) {
+          console.log(
+            '-> Connection to database failed. Please check your credentials and network connection',
+          );
+          process.exit(0);
+          return;
+        }
+        setTimeout(run, timeout);
+      }
+    }, timeout);
+  }
+
+  await tryConnectToDatabase();
+
   connect();
 }
 
