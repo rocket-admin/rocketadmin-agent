@@ -60,6 +60,7 @@ export interface IMessageDataInfo {
   searchedFieldValue: string;
   filteringFields: Array<string>;
   autocompleteFields: Array<string>;
+  email: string;
 }
 
 export interface IPaginationRO {

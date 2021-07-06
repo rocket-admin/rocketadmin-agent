@@ -30,6 +30,7 @@
     "knex": "^0.95.6",
     "knex-paginate": "^2.1.0",
     "mysql2": "^2.2.5",
+    "nest-winston": "^1.5.0",
     "oracledb": "^5.2.0",
     "pg": "^8.6.0",
     "reflect-metadata": "^0.1.13",
@@ -38,6 +39,7 @@
     "ssh2": "^1.1.0",
     "tedious": "^11.0.9",
     "tunnel-ssh": "^4.1.4",
+    "winston": "^3.3.3",
     "yarn": "^1.22.10"
   },
   "devDependencies": {

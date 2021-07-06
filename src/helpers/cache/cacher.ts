@@ -1,11 +1,9 @@
 import * as LRU from 'lru-cache';
 import { Constants } from '../constants/constants';
-import * as Knex from 'knex';
 
 const knexCache = new LRU(Constants.DEFAULT_CONNECTION_CACHE_OPTIONS);
 const tunnelCache = new LRU(Constants.DEFAULT_TUNNEL_CACHE_OPTIONS);
 const driverCache = new LRU(Constants.DEFAULT_DRIVER_CACHE_OPTIONS);
-const tableSettingsCache = new LRU(Constants.DEFAULT_SETTINGS_CACHE_OPTIONS);
 
 export class Cacher {
   public static getCachedKnex(connectionConfig): any {
