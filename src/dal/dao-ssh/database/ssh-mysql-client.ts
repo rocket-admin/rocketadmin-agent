@@ -69,6 +69,10 @@ export function getSshMySqlClient(
     ssh.on('close', function () {
       Cacher.delDriverCache(connectionConfig);
     });
+
+    ssh.on('error', function (e) {
+      reject(e);
+    });
   }).catch((e) => {
     throw new Error(e);
   });

@@ -196,7 +196,7 @@ export class DaoSshMysql implements IDaoInterface {
       ssl: ssl,
       cert: cert,
     };
-    
+
     if (!page || page <= 0) {
       page = Constants.DEFAULT_PAGINATION.page;
       const { list_per_page } = settings;
@@ -540,7 +540,22 @@ export class DaoSshMysql implements IDaoInterface {
     } catch (e) {
       return false;
     }
-    const knex = await this.configureKnex(this.connection);
+
+    const { host, username, password, database, port, type, ssl, cert } =
+      this.connection;
+    const connectionConfig = {
+      host: host,
+      username: username,
+      password: password,
+      database: database,
+      port: port,
+      type: type,
+      ssl: ssl,
+      cert: cert,
+    };
+
+    const knex = await this.configureKnex(connectionConfig);
+
     try {
       result = await knex().connection(mySqlDriver).select(1);
     } catch (e) {
