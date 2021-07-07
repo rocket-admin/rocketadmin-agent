@@ -1,6 +1,8 @@
+import * as fs from 'fs';
 import * as winston from 'winston';
 import { CreateLogRecordDto } from './dto/create-log-record.dto';
 import { LogOperationTypeEnum, OperationResultStatusEnum } from '../../enums';
+import * as path from 'path';
 
 export class Logger {
   private static readonly logger = winston.createLogger({
@@ -42,5 +44,20 @@ export class Logger {
       /* eslint-enable */
     };
     this.logger.info(log);
+    this.writeLogToFile(log);
+  }
+
+  private static writeLogToFile(log): void {
+    const logOptionFromConfig = parseInt(process.env.LOGS_TO_TEXT_FILE) === 1;
+    if (!logOptionFromConfig) {
+      return;
+    }
+    log = JSON.stringify(log) + '\n';
+    const filePath = path.join('src', 'storage', 'logs.txt');
+    fs.appendFile(filePath, log, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
   }
 }
