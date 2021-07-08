@@ -9,7 +9,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-/src/storage/logs.txt
+/storage/logs.txt
 
 # OS
 .DS_Store

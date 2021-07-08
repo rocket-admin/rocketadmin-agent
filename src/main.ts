@@ -64,7 +64,7 @@ async function bootstrap() {
   }
 
   console.log('-> Application started');
-  const connection = getConnectionToDbParams();
+  const connection = await getConnectionToDbParams();
 
   async function tryConnectToDatabase(timeout = 2000) {
     if (await checkConnection(connection)) {

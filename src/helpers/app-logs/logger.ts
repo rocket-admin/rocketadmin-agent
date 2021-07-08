@@ -1,8 +1,8 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import * as winston from 'winston';
 import { CreateLogRecordDto } from './dto/create-log-record.dto';
 import { LogOperationTypeEnum, OperationResultStatusEnum } from '../../enums';
-import * as path from 'path';
 
 export class Logger {
   private static readonly logger = winston.createLogger({
@@ -53,7 +53,7 @@ export class Logger {
       return;
     }
     log = JSON.stringify(log) + '\n';
-    const filePath = path.join('src', 'storage', 'logs.txt');
+    const filePath = path.join('storage', 'stored-logs', 'logs.txt');
     fs.appendFile(filePath, log, (err) => {
       if (err) {
         console.log(err);
