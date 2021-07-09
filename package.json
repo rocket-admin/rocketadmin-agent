@@ -26,6 +26,7 @@
     "@nestjs/core": "^7.6.15",
     "@nestjs/platform-express": "^7.6.15",
     "@nestjs/platform-ws": "^7.6.17",
+    "faker": "^5.5.3",
     "get-port": "^5.1.1",
     "knex": "^0.95.6",
     "knex-paginate": "^2.1.0",
@@ -70,8 +71,8 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
+    "rootDir": ".",
+    "testRegex": ".spec.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

@@ -160,27 +160,28 @@ export class DaoSshOracleDB implements IDaoInterface {
       autocompleteFields.value &&
       autocompleteFields.fields.length > 0
     ) {
-      const rows = await knex
-        .select(autocompleteFields.fields)
-        .from(tableName)
-        .withSchema(
-          this.connection.schema
-            ? this.connection.schema
-            : this.connection.username.toUpperCase(),
-        )
-        .modify((builder) => {
-          /*eslint-disable*/
-          const { fields, value } = autocompleteFields;
-          if (value !== '*') {
-            for (const field of fields) {
-              builder.orWhere(field, 'like', `${value}%`);
-            }
-          } else {
-            return;
-          }
-          /*eslint-enable*/
-        })
-        .limit(Constants.AUTOCOMPLETE_ROW_LIMIT);
+      let andWhere = '';
+      for (let i = 0; i < autocompleteFields.fields.length; i++) {
+        if (i === 0) {
+          andWhere += ` WHERE CAST (?? AS VARCHAR (255)) like '${autocompleteFields.value}%'`;
+        } else {
+          andWhere += ` OR CAST (?? AS VARCHAR (255)) like '${autocompleteFields.value}%'`;
+        }
+      }
+      tableName = this.attachSchemaNameToTableName(tableName);
+      const rows = await knex.transaction((trx) => {
+        knex
+          .raw(
+            `SELECT ${autocompleteFields.fields.map((_) => '??').join(', ')}
+          FROM ${tableName} ${andWhere ? andWhere : ''} FETCH FIRST ${
+              Constants.AUTOCOMPLETE_ROW_LIMIT
+            } ROWS ONLY `,
+            [...autocompleteFields.fields, ...autocompleteFields.fields],
+          )
+          .transacting(trx)
+          .then(trx.commit)
+          .catch(trx.rollback);
+      });
       return {
         data: rows,
         pagination: {},

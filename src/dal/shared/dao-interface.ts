@@ -11,7 +11,7 @@ export interface IDaoInterface {
   getRowByPrimaryKey(
     tableName: string,
     primaryKey,
-    settings: ITableSettings | Record<string, never>,
+    settings: ITableSettings | Record<string, unknown>,
   );
 
   getRowsFromTable(
@@ -36,7 +36,10 @@ export interface IDaoInterface {
 
   updateRowInTable(tableName: string, row, primaryKey);
 
-  validateSettings(settings: ITableSettings | Record<string, never>, tableName);
+  validateSettings(
+    settings: ITableSettings | Record<string, unknown>,
+    tableName,
+  );
 }
 
 export interface IDaoRowsRO {

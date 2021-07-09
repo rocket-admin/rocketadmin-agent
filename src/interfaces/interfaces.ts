@@ -54,7 +54,7 @@ export interface IMessageDataInfo {
   tableName: string;
   row: any;
   primaryKey: any;
-  tableSettings: ITableSettings;
+  tableSettings: ITableSettings | Record<string, unknown>;
   page: number;
   perPage: number;
   searchedFieldValue: string;
