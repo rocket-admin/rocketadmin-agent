@@ -1,0 +1,22 @@
+{"table_name":"Customers","user_email":"r.tem_negreyev@meta.ua","operation_time":"2021-07-08T07:38:25.254Z","operation_type":"rowsReceived","operation_status":"successfully"}
+{"table_name":"Customers","user_email":"r.tem_negreyev@meta.ua","operation_time":"2021-07-08T08:47:11.101Z","operation_type":"rowsReceived","operation_status":"successfully"}
+{"received_data":{"name":"Nadine Jerde","email":"Louie54@gmail.com"},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T12:50:54.076Z","operation_type":"addRow","operation_status":"successfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T12:56:24.680Z","operation_type":"deleteRow","operation_status":"successfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T12:57:27.831Z","operation_type":"deleteRow","operation_status":"successfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T12:58:17.388Z","operation_type":"deleteRow","operation_status":"successfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:02:23.831Z","operation_type":"deleteRow","operation_status":"successfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:02:46.159Z","operation_type":"rowReceived","operation_status":"successfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:04:52.963Z","operation_type":"rowReceived","operation_status":"successfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:11:05.272Z","operation_type":"rowsReceived","operation_status":"unsuccessfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:11:25.626Z","operation_type":"rowsReceived","operation_status":"unsuccessfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:12:16.125Z","operation_type":"rowReceived","operation_status":"unsuccessfully"}
+{"received_data":{"id":1},"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:12:58.476Z","operation_type":"rowReceived","operation_status":"successfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:13:16.903Z","operation_type":"rowsReceived","operation_status":"unsuccessfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:13:35.969Z","operation_type":"rowsReceived","operation_status":"unsuccessfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:15:07.274Z","operation_type":"rowsReceived","operation_status":"unsuccessfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:16:15.653Z","operation_type":"rowsReceived","operation_status":"unsuccessfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:16:40.319Z","operation_type":"rowsReceived","operation_status":"successfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:17:13.408Z","operation_type":"rowsReceived","operation_status":"successfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:26:58.543Z","operation_type":"rowsReceived","operation_status":"successfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:27:56.271Z","operation_type":"rowsReceived","operation_status":"successfully"}
+{"table_name":"users","user_email":"test@testmail.com","operation_time":"2021-07-08T13:36:45.563Z","operation_type":"rowsReceived","operation_status":"successfully"}
