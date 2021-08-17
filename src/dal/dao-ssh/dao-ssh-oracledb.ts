@@ -1,7 +1,7 @@
 import { Constants } from '../../helpers/constants/constants';
 import { DaoOracledb } from '../dao/dao-oracledb';
 import { FilterCriteriaEnum, QueryOrderingEnum } from '../../enums';
-import { IDaoInterface } from '../shared/dao-interface';
+import { IDaoInterface, ITestConnectResult } from '../shared/dao-interface';
 import { TunnelCreator } from '../shared/tunnel-creator';
 import {
   checkFieldAutoincrement,
@@ -21,12 +21,8 @@ export class DaoSshOracleDB implements IDaoInterface {
   }
 
   async addRowInTable(tableName: string, row) {
-    const tableStructure = (await this.getTableStructure(
-      tableName,
-    )) as Array<any>;
-    const primaryColumns = (await this.getTablePrimaryColumns(
-      tableName,
-    )) as Array<any>;
+    const tableStructure = (await this.getTableStructure(tableName)) as Array<any>;
+    const primaryColumns = (await this.getTablePrimaryColumns(tableName)) as Array<any>;
     const primaryKey = primaryColumns[0];
     const primaryKeyIndexInStructure = tableStructure
       .map((e) => {
@@ -48,9 +44,7 @@ export class DaoSshOracleDB implements IDaoInterface {
           .transaction((trx) => {
             knex
               .raw(
-                `insert INTO ${tableName} (${keys
-                  .map((_) => '??')
-                  .join(', ')}) VALUES
+                `insert INTO ${tableName} (${keys.map((_) => '??').join(', ')}) VALUES
                      (${values.map((_) => '?').join(', ')})`,
                 [...keys, ...values],
               )
@@ -62,14 +56,7 @@ export class DaoSshOracleDB implements IDaoInterface {
             throw new Error(e);
           });
         const queryResult = await knex(tableName)
-          .select(
-            knex.raw(
-              `${primaryKeyStructure.column_default.replace(
-                /nextval/gi,
-                'currval',
-              )}`,
-            ),
-          )
+          .select(knex.raw(`${primaryKeyStructure.column_default.replace(/nextval/gi, 'currval')}`))
           .catch((e) => {
             throw new Error(e);
           });
@@ -81,9 +68,7 @@ export class DaoSshOracleDB implements IDaoInterface {
           .transaction((trx) => {
             knex
               .raw(
-                `insert INTO ${tableName} (${keys
-                  .map((_) => '??')
-                  .join(', ')}) VALUES
+                `insert INTO ${tableName} (${keys.map((_) => '??').join(', ')}) VALUES
                      (${values.map((_) => '?').join(', ')})`,
                 [...keys, ...values],
               )
@@ -103,9 +88,7 @@ export class DaoSshOracleDB implements IDaoInterface {
         .transaction((trx) => {
           knex
             .raw(
-              `insert INTO ${tableName} (${keys
-                .map((_) => '??')
-                .join(', ')}) VALUES
+              `insert INTO ${tableName} (${keys.map((_) => '??').join(', ')}) VALUES
                      (${values.map((_) => '?').join(', ')})`,
               [...keys, ...values],
             )
@@ -123,11 +106,7 @@ export class DaoSshOracleDB implements IDaoInterface {
   async deleteRowInTable(tableName: string, primaryKey) {
     const knex = await this.createTunneledKnex();
     return await knex(tableName)
-      .withSchema(
-        this.connection.schema
-          ? this.connection.schema
-          : this.connection.username.toUpperCase(),
-      )
+      .withSchema(this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase())
       .where(primaryKey)
       .del();
   }
@@ -135,11 +114,7 @@ export class DaoSshOracleDB implements IDaoInterface {
   async getRowByPrimaryKey(tableName: string, primaryKey) {
     const knex = await this.createTunneledKnex();
     return await knex(tableName)
-      .withSchema(
-        this.connection.schema
-          ? this.connection.schema
-          : this.connection.username.toUpperCase(),
-      )
+      .withSchema(this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase())
       .where(primaryKey);
   }
 
@@ -173,9 +148,7 @@ export class DaoSshOracleDB implements IDaoInterface {
         knex
           .raw(
             `SELECT ${autocompleteFields.fields.map((_) => '??').join(', ')}
-          FROM ${tableName} ${andWhere ? andWhere : ''} FETCH FIRST ${
-              Constants.AUTOCOMPLETE_ROW_LIMIT
-            } ROWS ONLY `,
+          FROM ${tableName} ${andWhere ? andWhere : ''} FETCH FIRST ${Constants.AUTOCOMPLETE_ROW_LIMIT} ROWS ONLY `,
             [...autocompleteFields.fields, ...autocompleteFields.fields],
           )
           .transacting(trx)
@@ -413,10 +386,7 @@ export class DaoSshOracleDB implements IDaoInterface {
     return tableSettingsFieldValidator(tableStructure, settings);
   }
 
-  private async findAvaliableFields(
-    settings: ITableSettings,
-    tableName: string,
-  ): Promise<Array<string>> {
+  private async findAvaliableFields(settings: ITableSettings, tableName: string): Promise<Array<string>> {
     let availableFields = [];
     if (isObjectEmpty(settings)) {
       const tableStructure = await this.getTableStructure(tableName);
@@ -538,9 +508,7 @@ export class DaoSshOracleDB implements IDaoInterface {
       knex
         .raw(
           `SELECT ${columnsForSelect.map((_) => '??').join(', ')}
-          FROM ${tableName} WHERE ?? IN (${fieldValues
-            .map((_) => '??')
-            .join(', ')})`,
+          FROM ${tableName} WHERE ?? IN (${fieldValues.map((_) => '??').join(', ')})`,
           [...columnsForSelect, referencedFieldName, ...fieldValues],
         )
         .transacting(trx)
@@ -549,15 +517,27 @@ export class DaoSshOracleDB implements IDaoInterface {
     });
   }
 
-  async testConnect(): Promise<boolean> {
+  async testConnect(): Promise<ITestConnectResult> {
     const knex = await this.createTunneledKnex();
     let result;
     try {
       result = await knex('DUAL').select(1);
+      if (result) {
+        return {
+          result: true,
+          message: 'Successfully connected',
+        };
+      }
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
-    return !!result;
+    return {
+      result: false,
+      message: 'Connection failed',
+    };
   }
 
   private async createTunneledKnex() {

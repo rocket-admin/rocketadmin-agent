@@ -3,7 +3,7 @@ import { BasicDao } from '../shared/basic-dao';
 import { Cacher } from '../../helpers/cache/cacher';
 import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum } from '../../enums';
-import { IDaoInterface, IDaoRowsRO } from '../shared/dao-interface';
+import { IDaoInterface, IDaoRowsRO, ITestConnectResult } from '../shared/dao-interface';
 import {
   checkFieldAutoincrement,
   getNumbersFromString,
@@ -363,15 +363,26 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
     return tableSettingsFieldValidator(tableStructure, settings);
   }
 
-  async testConnect(): Promise<boolean> {
+  async testConnect(): Promise<ITestConnectResult> {
     const knex = await this.configureKnex(this.connection);
-    let result;
     try {
-      result = await knex().select(1);
+      const result = await knex().select(1);
+      if (result) {
+        return {
+          result: true,
+          message: 'Successfully connected',
+        };
+      }
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
-    return !!result;
+    return {
+      result: false,
+      message: 'Connection failed',
+    };
   }
 
   async getIdentityColumns(

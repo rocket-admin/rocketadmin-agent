@@ -6,7 +6,7 @@ import { FilterCriteriaEnum } from '../../enums';
 import { getSshMySqlClient } from './database/ssh-mysql-client';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
-import { IDaoInterface, IDaoRowsRO } from '../shared/dao-interface';
+import { IDaoInterface, IDaoRowsRO, ITestConnectResult } from '../shared/dao-interface';
 import {
   IConnection,
   IForeignKeyInfo,
@@ -54,8 +54,7 @@ export class DaoSshMysql implements IDaoInterface {
       .indexOf(primaryKey.column_name);
     const primaryKeyStructure = tableStructure[primaryKeyIndexInStructure];
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -81,9 +80,7 @@ export class DaoSshMysql implements IDaoInterface {
       } else {
         try {
           await knex(tableName).connection(mySqlDriver).insert(row);
-          const lastInsertId = await knex(tableName)
-            .connection(mySqlDriver)
-            .select(knex.raw(`LAST_INSERT_ID()`));
+          const lastInsertId = await knex(tableName).connection(mySqlDriver).select(knex.raw(`LAST_INSERT_ID()`));
           return {
             [primaryKey.column_name]: lastInsertId[0]['LAST_INSERT_ID()'],
           };
@@ -97,8 +94,7 @@ export class DaoSshMysql implements IDaoInterface {
   }
 
   async configureKnex(connectionConfig: any): Promise<Knex> {
-    const { host, username, password, database, port, type, ssl, cert } =
-      connectionConfig;
+    const { host, username, password, database, port, type, ssl, cert } = connectionConfig;
     const cachedKnex = Cacher.getCachedKnex(connectionConfig);
     if (cachedKnex) {
       return cachedKnex;
@@ -120,13 +116,9 @@ export class DaoSshMysql implements IDaoInterface {
     }
   }
 
-  async deleteRowInTable(
-    tableName: string,
-    primaryKey: string,
-  ): Promise<string> {
+  async deleteRowInTable(tableName: string, primaryKey: string): Promise<string> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -139,21 +131,12 @@ export class DaoSshMysql implements IDaoInterface {
     };
     const knex = await this.configureKnex(connectionConfig);
     await knex.raw('SET SQL_SAFE_UPDATES = 1;').connection(mySqlDriver);
-    return await knex(tableName)
-      .connection(mySqlDriver)
-      .returning(Object.keys(primaryKey))
-      .where(primaryKey)
-      .del();
+    return await knex(tableName).connection(mySqlDriver).returning(Object.keys(primaryKey)).where(primaryKey).del();
   }
 
-  async getRowByPrimaryKey(
-    tableName: string,
-    primaryKey,
-    settings: ITableSettings,
-  ): Promise<Array<string>> {
+  async getRowByPrimaryKey(tableName: string, primaryKey, settings: ITableSettings): Promise<Array<string>> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -169,10 +152,7 @@ export class DaoSshMysql implements IDaoInterface {
       return await knex(tableName).connection(mySqlDriver).where(primaryKey);
     }
     const availableFields = await this.findAvaliableFields(settings, tableName);
-    return await knex(tableName)
-      .connection(mySqlDriver)
-      .select(availableFields)
-      .where(primaryKey);
+    return await knex(tableName).connection(mySqlDriver).select(availableFields).where(primaryKey);
   }
 
   async getRowsFromTable(
@@ -312,12 +292,9 @@ export class DaoSshMysql implements IDaoInterface {
     return rowsRO;
   }
 
-  async getTableForeignKeys(
-    tableName: string,
-  ): Promise<Array<IForeignKeyInfo>> {
+  async getTableForeignKeys(tableName: string): Promise<Array<IForeignKeyInfo>> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -355,8 +332,7 @@ export class DaoSshMysql implements IDaoInterface {
 
   async getTablesFromDB(): Promise<Array<string>> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -369,24 +345,18 @@ export class DaoSshMysql implements IDaoInterface {
     };
 
     const knex = await this.configureKnex(connectionConfig);
-    const results = await knex('information_schema.tables')
-      .connection(mySqlDriver)
-      .select('table_name')
-      .where({
-        table_schema: database,
-      });
+    const results = await knex('information_schema.tables').connection(mySqlDriver).select('table_name').where({
+      table_schema: database,
+    });
     return results.map((row) => {
       if (row.hasOwnProperty('TABLE_NAME')) return row.TABLE_NAME;
       if (row.hasOwnProperty('table_name')) return row.table_name;
     });
   }
 
-  async getTablePrimaryColumns(
-    tableName: string,
-  ): Promise<Array<ITablePrimaryColumnInfo>> {
+  async getTablePrimaryColumns(tableName: string): Promise<Array<ITablePrimaryColumnInfo>> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -420,8 +390,7 @@ export class DaoSshMysql implements IDaoInterface {
 
   async getTableStructure(tableName: string): Promise<Array<IStructureInfo>> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -461,17 +430,11 @@ export class DaoSshMysql implements IDaoInterface {
       element.is_nullable = element.is_nullable === 'YES';
       renameObjectKeyName(element, 'is_nullable', 'allow_null');
       if (element.data_type === 'enum') {
-        const receivedStr = element.column_type.slice(
-          6,
-          element.column_type.length - 2,
-        );
+        const receivedStr = element.column_type.slice(6, element.column_type.length - 2);
         element.data_type_params = receivedStr.split("','");
       }
       if (element.data_type === 'set') {
-        const receivedStr = element.column_type.slice(
-          5,
-          element.column_type.length - 2,
-        );
+        const receivedStr = element.column_type.slice(5, element.column_type.length - 2);
         element.data_type_params = receivedStr.split("','");
       }
       element.character_maximum_length = element.character_maximum_length
@@ -483,11 +446,7 @@ export class DaoSshMysql implements IDaoInterface {
     return structureColumnsInLowercase;
   }
 
-  async updateRowInTable(
-    tableName: string,
-    row: any,
-    primaryKey: string,
-  ): Promise<string> {
+  async updateRowInTable(tableName: string, row: any, primaryKey: string): Promise<string> {
     const tableStructure = await this.getTableStructure(tableName);
     const jsonColumnNames = tableStructure
       .filter((structEl) => {
@@ -503,8 +462,7 @@ export class DaoSshMysql implements IDaoInterface {
     }
 
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -524,25 +482,24 @@ export class DaoSshMysql implements IDaoInterface {
       .update(row);
   }
 
-  async validateSettings(
-    settings: ITableSettings,
-    tableName: string,
-  ): Promise<Array<string>> {
+  async validateSettings(settings: ITableSettings, tableName: string): Promise<Array<string>> {
     const tableStructure = await this.getTableStructure(tableName);
     return tableSettingsFieldValidator(tableStructure, settings);
   }
 
-  async testConnect(): Promise<boolean> {
+  async testConnect(): Promise<ITestConnectResult> {
     let mySqlDriver;
     let result;
     try {
       mySqlDriver = await this.getMySqlDriver(this.connection);
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
 
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -558,10 +515,22 @@ export class DaoSshMysql implements IDaoInterface {
 
     try {
       result = await knex().connection(mySqlDriver).select(1);
+      if (result) {
+        return {
+          result: true,
+          message: 'Successfully connected',
+        };
+      }
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
-    return !!result;
+    return {
+      result: false,
+      message: 'Connection failed',
+    };
   }
 
   async getIdentityColumns(
@@ -571,8 +540,7 @@ export class DaoSshMysql implements IDaoInterface {
     fieldValues: Array<string | number>,
   ): Promise<string> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,
@@ -596,10 +564,7 @@ export class DaoSshMysql implements IDaoInterface {
       .whereIn(referencedFieldName, fieldValues);
   }
 
-  private async findAvaliableFields(
-    settings: ITableSettings,
-    tableName: string,
-  ): Promise<Array<string>> {
+  private async findAvaliableFields(settings: ITableSettings, tableName: string): Promise<Array<string>> {
     let availableFields = [];
     if (isObjectEmpty(settings)) {
       const tableStructure = await this.getTableStructure(tableName);
@@ -651,15 +616,9 @@ export class DaoSshMysql implements IDaoInterface {
     }
   }
 
-  private async getRowsCount(
-    tableName,
-    filteringFields,
-    settings,
-    searchedFieldValue,
-  ): Promise<number> {
+  private async getRowsCount(tableName, filteringFields, settings, searchedFieldValue): Promise<number> {
     const mySqlDriver = await this.getMySqlDriver(this.connection);
-    const { host, username, password, database, port, type, ssl, cert } =
-      this.connection;
+    const { host, username, password, database, port, type, ssl, cert } = this.connection;
     const connectionConfig = {
       host: host,
       username: username,

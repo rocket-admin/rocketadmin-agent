@@ -28,7 +28,7 @@ export interface IDaoInterface {
 
   getTableStructure(tableName: string);
 
-  testConnect(): Promise<boolean>;
+  testConnect(): Promise<ITestConnectResult>;
 
   updateRowInTable(tableName: string, row, primaryKey);
 
@@ -45,4 +45,9 @@ export interface IDaoInterface {
 export interface IDaoRowsRO {
   data: Array<string>;
   pagination: IPaginationRO | Record<string, never>;
+}
+
+export interface ITestConnectResult {
+  result: boolean;
+  message: string;
 }

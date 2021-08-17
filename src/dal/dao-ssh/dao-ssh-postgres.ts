@@ -1,10 +1,5 @@
-import {
-  isObjectEmpty,
-  listTables,
-  renameObjectKeyName,
-  tableSettingsFieldValidator,
-} from '../../helpers';
-import { IDaoInterface } from '../shared/dao-interface';
+import { isObjectEmpty, listTables, renameObjectKeyName, tableSettingsFieldValidator } from '../../helpers';
+import { IDaoInterface, ITestConnectResult } from '../shared/dao-interface';
 import { BasicDao } from '../shared/basic-dao';
 import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum } from '../../enums';
@@ -82,11 +77,7 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
       .del();
   }
 
-  async getRowByPrimaryKey(
-    tableName,
-    primaryKey,
-    settings: ITableSettings,
-  ): Promise<any> {
+  async getRowByPrimaryKey(tableName, primaryKey, settings: ITableSettings): Promise<any> {
     const knex = await this.createTunneledKnex();
     if (!settings || isObjectEmpty(settings)) {
       return knex(tableName)
@@ -234,9 +225,7 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
 
   async getTableForeignKeys(tableName: string): Promise<any> {
     const knex = await this.createTunneledKnex();
-    const tableSchema = this.connection.schema
-      ? this.connection.schema
-      : 'public';
+    const tableSchema = this.connection.schema ? this.connection.schema : 'public';
     const foreignKeys = await knex(tableName)
       .select(
         knex.raw(`tc.constraint_name,
@@ -276,20 +265,10 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
     const knex = (await this.createTunneledKnex()) as any;
     tableName = this.attachSchemaNameToTableName(tableName);
     const primaryColumns = await knex(tableName)
-      .select(
-        knex.raw(
-          'a.attname, format_type(a.atttypid, a.atttypmod) AS data_type',
-        ),
-      )
+      .select(knex.raw('a.attname, format_type(a.atttypid, a.atttypmod) AS data_type'))
       .from(knex.raw('pg_index i'))
-      .join(
-        knex.raw(
-          'pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)',
-        ),
-      )
-      .where(
-        knex.raw(`i.indrelid = ?::regclass AND i.indisprimary;`, tableName),
-      );
+      .join(knex.raw('pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)'))
+      .where(knex.raw(`i.indrelid = ?::regclass AND i.indisprimary;`, tableName));
 
     const primaryColumnsToColumnName = [];
     for (const primaryColumn of primaryColumns) {
@@ -312,19 +291,9 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
   async getTableStructure(tableName: string): Promise<any> {
     const knex = (await this.createTunneledKnex()) as any;
     const result = await knex('information_schema.columns')
-      .select(
-        'column_name',
-        'column_default',
-        'data_type',
-        'udt_name',
-        'is_nullable',
-        'character_maximum_length',
-      )
+      .select('column_name', 'column_default', 'data_type', 'udt_name', 'is_nullable', 'character_maximum_length')
       .where(`table_name`, tableName)
-      .andWhere(
-        'table_schema',
-        this.connection.schema ? this.connection.schema : 'public',
-      );
+      .andWhere('table_schema', this.connection.schema ? this.connection.schema : 'public');
 
     const customTypeIndexes = [];
     for (let i = 0; i < result.length; i++) {
@@ -356,11 +325,7 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
           customTypeInTableName,
         );
         let enumLabelRows = [];
-        if (
-          enumLabelQueryResult &&
-          enumLabelQueryResult.rows &&
-          enumLabelQueryResult.rows.length > 0
-        ) {
+        if (enumLabelQueryResult && enumLabelQueryResult.rows && enumLabelQueryResult.rows.length > 0) {
           enumLabelRows = enumLabelQueryResult.rows;
 
           enumLabelRows = enumLabelRows.map((el) => {
@@ -380,8 +345,7 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
               data_type: attr.format_type,
             });
           }
-          result[customTypeIndexes[i]].data_type =
-            result[customTypeIndexes[i]].udt_name;
+          result[customTypeIndexes[i]].data_type = result[customTypeIndexes[i]].udt_name;
           result[customTypeIndexes[i]].data_type_params = customDataTypeRo;
         }
       }
@@ -389,22 +353,30 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
     return result;
   }
 
-  async testConnect(): Promise<boolean> {
+  async testConnect(): Promise<ITestConnectResult> {
     const knex = await this.createTunneledKnex();
     let result;
     try {
       result = await knex().select(1);
+      if (result) {
+        return {
+          result: true,
+          message: 'Successfully connected',
+        };
+      }
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
-    return !!result;
+    return {
+      result: false,
+      message: 'Connection failed',
+    };
   }
 
-  async updateRowInTable(
-    tableName: string,
-    row: any,
-    primaryKey: any,
-  ): Promise<any> {
+  async updateRowInTable(tableName: string, row: any, primaryKey: any): Promise<any> {
     const tableStructure = await this.getTableStructure(tableName);
     const jsonColumnNames = tableStructure
       .filter((structEl) => {
@@ -427,10 +399,7 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
       .update(row);
   }
 
-  async validateSettings(
-    settings: ITableSettings,
-    tableName,
-  ): Promise<Array<string>> {
+  async validateSettings(settings: ITableSettings, tableName): Promise<Array<string>> {
     const tableStructure = await this.getTableStructure(tableName);
     return tableSettingsFieldValidator(tableStructure, settings);
   }
@@ -439,10 +408,7 @@ export class DaoSshPostgres extends BasicDao implements IDaoInterface {
     return await TunnelCreator.createTunneledKnex(this.connection);
   }
 
-  private async findAvaliableFields(
-    settings: ITableSettings,
-    tableName: string,
-  ): Promise<Array<string>> {
+  private async findAvaliableFields(settings: ITableSettings, tableName: string): Promise<Array<string>> {
     let availableFields = [];
     if (isObjectEmpty(settings)) {
       const tableStructure = await this.getTableStructure(tableName);

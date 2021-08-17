@@ -4,7 +4,7 @@ import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum } from '../../enums';
 import { IConnection, ITableSettings } from '../../interfaces/interfaces';
 
-import { IDaoInterface } from '../shared/dao-interface';
+import { IDaoInterface, ITestConnectResult } from '../shared/dao-interface';
 import { isObjectEmpty, listTables, renameObjectKeyName, tableSettingsFieldValidator } from '../../helpers';
 import { knex } from 'knex';
 import { types } from 'pg';
@@ -355,15 +355,27 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
     return result;
   }
 
-  async testConnect(): Promise<boolean> {
+  async testConnect(): Promise<ITestConnectResult> {
     const knex = await this.configureKnex(this.connection);
     let result;
     try {
       result = await knex().select(1);
+      if (result) {
+        return {
+          result: true,
+          message: 'Successfully connected',
+        };
+      }
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
-    return !!result;
+    return {
+      result: false,
+      message: 'Connection failed',
+    };
   }
 
   async updateRowInTable(tableName: string, row: any, primaryKey: any): Promise<any> {

@@ -2,7 +2,7 @@ import { Cacher } from '../../helpers/cache/cacher';
 import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum, QueryOrderingEnum } from '../../enums';
 import { IConnection, ITableSettings } from '../../interfaces/interfaces';
-import { IDaoInterface } from '../shared/dao-interface';
+import { IDaoInterface, ITestConnectResult } from '../shared/dao-interface';
 import { knex } from 'knex';
 import {
   checkFieldAutoincrement,
@@ -537,15 +537,26 @@ export class DaoOracledb implements IDaoInterface {
     });
   }
 
-  async testConnect(): Promise<boolean> {
+  async testConnect(): Promise<ITestConnectResult> {
     const knex = this.configureKnex(this.connection);
-    let result;
     try {
-      result = await knex('DUAL').select(1);
+      const result = await knex('DUAL').select(1);
+      if (result) {
+        return {
+          result: true,
+          message: 'Successfully connected',
+        };
+      }
     } catch (e) {
-      return false;
+      return {
+        result: false,
+        message: e.message,
+      };
     }
-    return !!result;
+    return {
+      result: false,
+      message: 'Connection failed',
+    };
   }
 
   private attachSchemaNameToTableName(tableName: string): string {
