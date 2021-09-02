@@ -3,36 +3,16 @@
 There are two options for installing Autoadmin-agent: using Docker Desktop (for MacOS and Windows) or using Docker Engine (for Linux).
 
 
-## Installing via Docker Desktop
-
-First step is installing [Docker Desktop](https://www.docker.com/products/docker-desktop).
-Second step – run Docker Dektop app.
-Third step - install [WSL 2](https://docs.microsoft.com/en-us/windows/wsl/install-win10) on Windows if required.
+## Installing autoadmin using docker
 
 Open Terminal app and run following commands:
 
-```sh
-docker run --name repo alpine/git clone https://github.com/Autoadmin-org/autoadmin-agent.git
+```bash
 
-docker cp repo:/git/autoadmin-agent/ . 
+docker pull autoadminorg/autoadmin-agent
+docker run -e CONNECTION_TOKEN=connection_token -e CONNECTION_TYPE=mysql -e CONNECTION_USERNAME=your_username \
+    -e CONNECTION_PASSWORD=your_password -e CONNECTION_HOST=example.com autoadminorg/autoadmin-agent
 ```
-After that proceed to the created directory. It's located:
-
-Windows - *C:\Users\username\autoadmin-agent*
-MacOS - *Macintosh HD\Users\username\autoadmin-agent*
-
-Fourth step – open **.config.env** file and specify all required credentials.
-
-After that, go back to the Terminal app and run following commands:
-```sh
-cd autoadmin-agent
-docker build -t autoadminagent . 
-
-docker run -d -p 80:80 --name autoadmin-agent autoadminagent
-```
-After sucessfull build and run of Docker container, new connection will appear in Autoadmin Connections List.
-
-
 
 ## Install via Docker Compose
 
