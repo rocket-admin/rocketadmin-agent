@@ -1,33 +1,22 @@
 # Autoadmin-agent
 
-There are two options for installing Autoadmin-agent: using Yarn or Docker.
+There are two options for installing Autoadmin-agent: using Docker Desktop (for MacOS and Windows) or using Docker Engine (for Linux).
 
 
-## Install via Yarn
+## Installing autoadmin using docker
 
-First step is installing actual [Yarn](https://yarnpkg.com/getting-started/install).
-Depending on the way you install Yarn, some package managers will include Node.js.
-If not, please install [Node.js](https://nodejs.org) as well.
+Open Terminal app and run following commands:
 
-Second step – download the [source code](https://github.com/Autoadmin-org/autoadmin-agent/archive/refs/heads/master.zip).
+```bash
 
-Third step – open **.config.env** file and specify all required credentials.
-
-Open Terminal app and change directory to the downloaded Autoadmin-agent folder.
-
-Run following commands one by one:
-
-```sh
-yarn install
-yarn start
+docker pull autoadminorg/autoadmin-agent
+docker run -e CONNECTION_TOKEN=connection_token -e CONNECTION_TYPE=mysql -e CONNECTION_USERNAME=your_username \
+    -e CONNECTION_PASSWORD=your_password -e CONNECTION_HOST=example.com autoadminorg/autoadmin-agent
 ```
-After sucessfull execution, new connection will appear in Autoadmin Connections List.
 
+## Install via Docker Compose
 
-
-## Install via Docker
-
-First step is installing actual [Docker](https://docker.com).
+First step is installing [Docker Engine](https://docker.com).
 On Linux, please install [Docker Compose](https://docs.docker.com/compose/install/) as well.
 > Note: Docker Desktop on Windows and MacOS already include Docker Compose.
 
@@ -46,4 +35,3 @@ Open Terminal app and run:
 docker-compose up --build
 ```
 After sucessfull execution, new connection will appear in Autoadmin Connections List.
-
