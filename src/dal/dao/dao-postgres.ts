@@ -47,13 +47,8 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
     }
 
     const primaryColumns = await this.getTablePrimaryColumns(tableName);
-    const primaryKey = primaryColumns[0];
-    tableStructure
-      .map((e) => {
-        return e.column_name;
-      })
-      .indexOf(primaryKey.column_name);
     if (primaryColumns?.length > 0) {
+      const primaryKey = primaryColumns[0];
       const result = await knex(tableName)
         .withSchema(this.connection.schema ? this.connection.schema : 'public')
         .returning(primaryKey.column_name)
@@ -62,10 +57,12 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
         [primaryKey.column_name]: result[0],
       };
     } else {
+      const rowFields = Object.keys(row);
       const result = await knex(tableName)
         .withSchema(this.connection.schema ? this.connection.schema : 'public')
+        .returning(rowFields)
         .insert(row);
-      return result;
+      return result[0];
     }
   }
 
