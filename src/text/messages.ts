@@ -5,6 +5,7 @@ export const Messages = {
   CANT_LIST_AND_EXCLUDE: `You cannot select the same field names to view and exclude`,
   CANT_ORDER_AND_EXCLUDE: `You cannot select the same field names to order and exclude`,
   CONNECTION_TOKEN_MISSING: 'Connection token missing',
+  CONNECTION_TYPE_UNSUPPORTED: 'Connection to this type of database has not been implemented yet',
   DATABASE_MISSING: 'Database is missing',
   FAIL_MESSAGE: (message: string) => `Method execution failed with message: "${message}".`,
   FAILED_ESTABLISH_SSH_CONNECTION: `Failed to establish ssh connection`,
