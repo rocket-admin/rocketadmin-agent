@@ -4213,10 +4213,10 @@ knex-paginate@^2.1.0:
   resolved "https://registry.yarnpkg.com/knex-paginate/-/knex-paginate-2.3.0.tgz#66aa14c47e7310a5870a4449c367e925dd72f616"
   integrity sha512-P/ysU+gs7GsUxuCRSSrixAL9CVgOMEf0iOFG2gsa9osaeXLJ0/6aB7pFHlbI77LATm5xuT1Zm8xrQjCquS93vg==
 
-knex@^0.95.6:
-  version "0.95.10"
-  resolved "https://registry.yarnpkg.com/knex/-/knex-0.95.10.tgz#9c41a4f69309bc437f79985cbc0a1e7a3208483e"
-  integrity sha512-I60A8TXcMdeJlE6h7DSgEYyY37S7kgLObz1qlJ7QvPMD6vnKO5dtuLEht5pMia9Qf5BomqVgkWCdVTqcC/ImOA==
+knex@^0.95.11:
+  version "0.95.11"
+  resolved "https://registry.yarnpkg.com/knex/-/knex-0.95.11.tgz#1526bd700cb07497252214d34c10f660aee01a3e"
+  integrity sha512-grDetD91O8VoQVCFqeWTgkzdq5406W6rggF/lK1hHuwzmjDs/0m9KxyncGdZbklTi7aUgHvw3+Cfy4x7FvpdaQ==
   dependencies:
     colorette "1.2.1"
     commander "^7.1.0"
