@@ -2,9 +2,11 @@ import { QueryOrderingEnum } from '../../enums';
 import { Messages } from '../../text/messages';
 import { isObjectEmpty } from '../is-object-empty';
 import { ITableSettings } from '../../interfaces/interfaces';
+import { IPrimaryKeyInfo } from '../../dal/shared/dao-interface';
 
 export function tableSettingsFieldValidator(
   tableStructure: any,
+  primaryColumns: Array<IPrimaryKeyInfo>,
   settings: ITableSettings,
 ): Array<string> {
   /* eslint-disable */
@@ -117,6 +119,15 @@ export function tableSettingsFieldValidator(
         const index = excluded_fields.indexOf(field);
         if (index >= 0) {
           errorMessages.push(Messages.CANT_LIST_AND_EXCLUDE);
+        }
+      }
+    }
+
+    if (primaryColumns && primaryColumns.length > 0) {
+      for (const column of primaryColumns) {
+        const index = excluded_fields.indexOf(column.column_name);
+        if (index >= 0) {
+          errors.push(Messages.CANT_EXCLUDE_PRIMARY_KEY(column.column_name));
         }
       }
     }

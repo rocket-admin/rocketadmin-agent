@@ -4,6 +4,7 @@ import { QueryOrderingEnum } from '../enums';
 export const Messages = {
   CANT_LIST_AND_EXCLUDE: `You cannot select the same field names to view and exclude`,
   CANT_ORDER_AND_EXCLUDE: `You cannot select the same field names to order and exclude`,
+  CANT_EXCLUDE_PRIMARY_KEY: (key: string) => `You cannot exclude primary key ${key}`,
   CONNECTION_TOKEN_MISSING: 'Connection token missing',
   CONNECTION_TYPE_UNSUPPORTED: 'Connection to this type of database has not been implemented yet',
   DATABASE_MISSING: 'Database is missing',

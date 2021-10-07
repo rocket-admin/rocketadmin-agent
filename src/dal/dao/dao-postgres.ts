@@ -399,8 +399,8 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
 
   async validateSettings(settings: ITableSettings, tableName: string): Promise<Array<string>> {
     const tableStructure = await this.getTableStructure(tableName);
-    const result = tableSettingsFieldValidator(tableStructure, settings);
-    return result;
+    const primaryColumns = await this.getTablePrimaryColumns(tableName);
+    return tableSettingsFieldValidator(tableStructure, primaryColumns, settings);
   }
 
   configureKnex(connectionConfig: IConnection): any {

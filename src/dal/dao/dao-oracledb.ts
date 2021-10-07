@@ -403,7 +403,8 @@ export class DaoOracledb implements IDaoInterface {
 
   async validateSettings(settings: ITableSettings): Promise<Array<string>> {
     const tableStructure = await this.getTableStructure(settings.table_name);
-    return tableSettingsFieldValidator(tableStructure, settings);
+    const primaryColumns = await this.getTablePrimaryColumns(settings.table_name);
+    return tableSettingsFieldValidator(tableStructure, primaryColumns, settings);
   }
 
   private async findAvaliableFields(settings: ITableSettings, tableName: string): Promise<Array<string>> {

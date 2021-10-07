@@ -360,7 +360,8 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
 
   async validateSettings(settings: ITableSettings, tableName: string): Promise<Array<string>> {
     const tableStructure = await this.getTableStructure(tableName);
-    return tableSettingsFieldValidator(tableStructure, settings);
+    const primaryColumns = await this.getTablePrimaryColumns(tableName);
+    return tableSettingsFieldValidator(tableStructure, primaryColumns, settings);
   }
 
   async testConnect(): Promise<ITestConnectResult> {

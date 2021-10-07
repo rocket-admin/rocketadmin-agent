@@ -51,3 +51,8 @@ export interface ITestConnectResult {
   result: boolean;
   message: string;
 }
+
+export interface IPrimaryKeyInfo {
+  column_name: string;
+  data_type: string;
+}
