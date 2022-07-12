@@ -1,14 +1,14 @@
 import { createDao } from '../dal/shared/create-dao';
-import { IConnection, IMessageData } from '../interfaces/interfaces';
+import { ICLIConnectionCredentials, IMessageData } from '../interfaces/interfaces';
 import { Messages } from '../text/messages';
 import { OperationTypeEnum } from '../enums/operation-type.enum';
 import { LogOperationTypeEnum, OperationResultStatusEnum } from '../enums';
 import { Logger } from '../helpers/app-logs/logger';
 
 export class CommandExecutor {
-  private readonly connectionConfig: IConnection;
+  private readonly connectionConfig: ICLIConnectionCredentials;
 
-  constructor(connectionConfig: IConnection) {
+  constructor(connectionConfig: ICLIConnectionCredentials) {
     this.connectionConfig = connectionConfig;
   }
 

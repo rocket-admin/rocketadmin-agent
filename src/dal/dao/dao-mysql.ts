@@ -15,7 +15,7 @@ import {
 } from '../../helpers';
 import {
   IAutocompleteFields,
-  IConnection,
+  ICLIConnectionCredentials,
   IFilteringFields,
   IForeignKeyInfo,
   IStructureInfo,
@@ -24,9 +24,9 @@ import {
 } from '../../interfaces/interfaces';
 
 export class DaoMysql extends BasicDao implements IDaoInterface {
-  private readonly connection: IConnection;
+  private readonly connection: ICLIConnectionCredentials;
 
-  constructor(connection: IConnection) {
+  constructor(connection: ICLIConnectionCredentials) {
     super();
     this.connection = connection;
   }
@@ -58,11 +58,14 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
     await knex.raw('SET SQL_SAFE_UPDATES = 1;');
     if (primaryColumns?.length > 0) {
       if (!checkFieldAutoincrement(primaryKeyStructure.column_default)) {
+        const primaryKeys = primaryColumns.map((column) => column.column_name);
         try {
           await knex(tableName).insert(row);
-          return {
-            [primaryKey.column_name]: row[primaryKey.column_name],
-          };
+          const resultsArray = [];
+          for (let i = 0; i < primaryKeys.length; i++) {
+            resultsArray.push([primaryKeys[i], row[primaryKeys[i]]]);
+          }
+          return Object.fromEntries(resultsArray);
         } catch (e) {
           throw new Error(e);
         }
@@ -290,7 +293,7 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
     return structureColumnsInLowercase;
   }
 
-  configureKnex(connectionConfig: IConnection): any {
+  configureKnex(connectionConfig: ICLIConnectionCredentials): any {
     const { host, username, password, database, port, ssl, cert } = connectionConfig;
     const cachedKnex = Cacher.getCachedKnex(connectionConfig);
     if (cachedKnex) {

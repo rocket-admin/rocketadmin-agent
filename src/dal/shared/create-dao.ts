@@ -3,10 +3,10 @@ import { DaoPostgres } from '../dao/dao-postgres';
 import { DaoMysql } from '../dao/dao-mysql';
 import { DaoOracledb } from '../dao/dao-oracledb';
 import { DaoMssql } from '../dao/dao-mssql';
-import { IConnection } from '../../interfaces/interfaces';
+import { ICLIConnectionCredentials } from '../../interfaces/interfaces';
 import { Messages } from '../../text/messages';
 
-export function createDao(connection: IConnection): IDaoInterface {
+export function createDao(connection: ICLIConnectionCredentials): IDaoInterface {
   switch (connection.type) {
     case 'postgres':
       return new DaoPostgres(connection);

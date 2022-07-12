@@ -3,7 +3,7 @@ import { AppModule } from '../../src/app.module';
 import { INestApplication } from '@nestjs/common';
 import { Knex, knex } from 'knex';
 import { Test } from '@nestjs/testing';
-import { IConnection } from '../../src/interfaces/interfaces';
+import { ICLIConnectionCredentials } from '../../src/interfaces/interfaces';
 import { CommandExecutor } from '../../src/command/command-executor';
 import { OperationTypeEnum } from '../../src/enums/operation-type.enum';
 import { Constants } from '../../src/helpers/constants/constants';
@@ -17,22 +17,24 @@ describe('Command executor tests', () => {
   const testTAbleSecondColumnName = 'email';
   const testSearchedUserName = 'Vasia';
   const testEntitiesSeedsCount = 42;
-  const connectionConfig: IConnection = {
+  const connectionConfig: ICLIConnectionCredentials = {
     cert: '',
     database: 'testDB',
     host: 'localhost',
     password: '123',
     port: 3308,
-    privateSSHKey: '',
     schema: '',
     sid: '',
-    ssh: false,
-    sshHost: '',
-    sshPort: 0,
-    sshUsername: '',
     ssl: false,
     type: 'mysql',
     username: 'root',
+    app_port: 3000,
+    token: 'token',
+    azure_encryption: false,
+    application_save_option: false,
+    config_encryption_option: false,
+    encryption_password: undefined,
+    saving_logs_option: false,
   };
 
   async function resetMySqlTestDB() {

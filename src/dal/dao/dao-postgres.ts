@@ -2,7 +2,7 @@ import { BasicDao } from '../shared/basic-dao';
 import { Cacher } from '../../helpers/cache/cacher';
 import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum } from '../../enums';
-import { IConnection, ITableSettings } from '../../interfaces/interfaces';
+import { ICLIConnectionCredentials, ITableSettings } from '../../interfaces/interfaces';
 
 import { IDaoInterface, ITestConnectResult } from '../shared/dao-interface';
 import { isObjectEmpty, listTables, renameObjectKeyName, tableSettingsFieldValidator } from '../../helpers';
@@ -22,9 +22,9 @@ types.setTypeParser(1184, function(stringValue) {
 types.setTypeParser(1186, (stringValue) => stringValue);
 
 export class DaoPostgres extends BasicDao implements IDaoInterface {
-  private readonly connection: IConnection;
+  private readonly connection: ICLIConnectionCredentials;
 
-  constructor(connection: IConnection) {
+  constructor(connection: ICLIConnectionCredentials) {
     super();
     this.connection = connection;
   }
@@ -48,21 +48,19 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
 
     const primaryColumns = await this.getTablePrimaryColumns(tableName);
     if (primaryColumns?.length > 0) {
-      const primaryKey = primaryColumns[0];
+      const primaryKey = primaryColumns.map((column) => column.column_name);
       const result = await knex(tableName)
         .withSchema(this.connection.schema ? this.connection.schema : 'public')
-        .returning(primaryKey.column_name)
+        .returning(primaryKey)
         .insert(row);
-      return {
-        [primaryKey.column_name]: result[0],
-      };
+      return result[0] as unknown as Record<string, unknown>;
     } else {
       const rowFields = Object.keys(row);
       const result = await knex(tableName)
         .withSchema(this.connection.schema ? this.connection.schema : 'public')
         .returning(rowFields)
         .insert(row);
-      return result[0];
+      return result[0] as any;
     }
   }
 
@@ -403,7 +401,7 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
     return tableSettingsFieldValidator(tableStructure, primaryColumns, settings);
   }
 
-  configureKnex(connectionConfig: IConnection): any {
+  configureKnex(connectionConfig: ICLIConnectionCredentials): any {
     return DaoPostgres.configureKnex(connectionConfig);
   }
 

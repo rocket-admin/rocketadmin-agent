@@ -4,5 +4,4 @@ export enum ConnectionTypeEnum {
   mysql2 = 'mysql2',
   oracledb = 'oracledb',
   mssql = 'mssql',
-  agent = 'agent',
 }
