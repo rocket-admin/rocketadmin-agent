@@ -7,22 +7,30 @@ export interface IAutocompleteFields {
   value: string;
 }
 
-export interface IConnection {
-  type?: string;
-  host?: string;
-  port?: number;
-  username?: string;
-  password?: string;
-  database?: string;
-  schema?: string;
-  sid?: string;
-  ssh?: boolean;
-  privateSSHKey?: string;
-  sshHost?: string;
-  sshPort?: number;
-  sshUsername?: string;
-  ssl?: boolean;
-  cert?: string;
+export interface ICLIConnectionCredentials {
+  type: string;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  schema: string;
+  sid: string;
+  ssl: boolean;
+  cert: string;
+  token: string;
+  app_port: number;
+  azure_encryption: boolean;
+  application_save_option: boolean;
+  config_encryption_option: boolean;
+  encryption_password: string;
+  saving_logs_option: boolean;
+}
+
+export interface ISavedCLIConnectionCredentials {
+  encrypted: boolean;
+  hash: string | null;
+  credentials: string | ICLIConnectionCredentials;
 }
 
 export interface ICustomFields {

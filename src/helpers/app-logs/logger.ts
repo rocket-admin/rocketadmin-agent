@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as winston from 'winston';
 import { CreateLogRecordDto } from './dto/create-log-record.dto';
 import { LogOperationTypeEnum, OperationResultStatusEnum } from '../../enums';
+import { Config } from '../../shared/config/config';
+import { Constants } from '../constants/constants';
 
 export class Logger {
   private static readonly logger = winston.createLogger({
@@ -24,9 +26,7 @@ export class Logger {
     newRecord.table_name = tableName ? tableName : undefined;
     newRecord.email = email ? email : 'unknown';
     newRecord.operationType = operationType ? operationType : undefined;
-    newRecord.operationStatusResult = operationStatusResult
-      ? operationStatusResult
-      : undefined;
+    newRecord.operationStatusResult = operationStatusResult ? operationStatusResult : undefined;
     newRecord.old_data = oldData ? oldData : undefined;
     this.printLogRecord(newRecord);
   }
@@ -48,12 +48,12 @@ export class Logger {
   }
 
   private static writeLogToFile(log): void {
-    const logOptionFromConfig = parseInt(process.env.LOGS_TO_TEXT_FILE) === 1;
+    const logOptionFromConfig = Config.getConnectionConfig().saving_logs_option;
     if (!logOptionFromConfig) {
       return;
     }
     log = JSON.stringify(log) + '\n';
-    const filePath = path.join('storage', 'stored-logs', 'logs.txt');
+    const filePath = path.join(process.cwd(), Constants.DEFAULT_LOGS_DIRNAME, Constants.DEFAULT_LOGS_FILENAME);
     fs.appendFile(filePath, log, (err) => {
       if (err) {
         console.log(err);

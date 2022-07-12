@@ -3,14 +3,19 @@ import { Cacher } from '../../helpers/cache/cacher';
 import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum, QueryOrderingEnum } from '../../enums';
 import { Knex, knex } from 'knex';
-import { IAutocompleteFields, IConnection, IFilteringFields, ITableSettings } from '../../interfaces/interfaces';
+import {
+  IAutocompleteFields,
+  ICLIConnectionCredentials,
+  IFilteringFields,
+  ITableSettings,
+} from '../../interfaces/interfaces';
 import { IDaoInterface, IDaoRowsRO, ITestConnectResult } from '../shared/dao-interface';
 import { objectKeysToLowercase, tableSettingsFieldValidator, isObjectEmpty, renameObjectKeyName } from '../../helpers';
 
 export class DaoMssql extends BasicDao implements IDaoInterface {
-  private readonly connection: IConnection;
+  private readonly connection: ICLIConnectionCredentials;
 
-  constructor(connection: IConnection) {
+  constructor(connection: ICLIConnectionCredentials) {
     super();
     this.connection = connection;
   }
@@ -19,6 +24,7 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
     const knex = await this.configureKnex(this.connection);
     const tableStructure = await this.getTableStructure(tableName);
     const primaryColumns = await this.getTablePrimaryColumns(tableName);
+    const primaryKeys = primaryColumns.map((column) => column.column_name);
     const primaryKey = primaryColumns[0];
     tableStructure
       .map((e) => {
@@ -28,21 +34,28 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
     const schemaName = await this.getSchemaName(tableName);
     tableName = `${schemaName}.[${tableName}]`;
     if (primaryColumns?.length > 0) {
-      const result = await knex(tableName).returning(primaryKey.column_name).insert(row);
-      return {
-        [primaryKey.column_name]: result[0],
-      };
+      const result = await knex(tableName).returning(primaryKeys).insert(row);
+      const resultsArray = [];
+      for (let i = 0; i < primaryKeys.length; i++) {
+        resultsArray.push([primaryKeys[i], result[i]]);
+      }
+      return Object.fromEntries(resultsArray);
     } else {
-      const result = await knex(tableName).insert(row);
-      return result;
+      const rowKeys = Object.keys(row);
+      const resultsArray = [];
+      const result = await knex(tableName).returning(rowKeys).insert(row);
+      for (let i = 0; i < rowKeys.length; i++) {
+        resultsArray.push([primaryKeys[i], result[i]]);
+      }
+      return Object.fromEntries(resultsArray);
     }
   }
 
-  configureKnex(connectionConfig: IConnection): Knex {
+  configureKnex(connectionConfig: ICLIConnectionCredentials): Knex {
     return DaoMssql.configureKnex(connectionConfig);
   }
 
-  public static configureKnex(connectionConfig: IConnection): Knex {
+  public static configureKnex(connectionConfig: ICLIConnectionCredentials): Knex {
     const { host, username, password, database, port, type, ssl, cert } = connectionConfig;
     const cachedKnex = Cacher.getCachedKnex(connectionConfig);
     if (cachedKnex) {

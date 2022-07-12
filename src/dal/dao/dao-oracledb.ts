@@ -1,7 +1,7 @@
 import { Cacher } from '../../helpers/cache/cacher';
 import { Constants } from '../../helpers/constants/constants';
 import { FilterCriteriaEnum, QueryOrderingEnum } from '../../enums';
-import { IConnection, ITableSettings } from '../../interfaces/interfaces';
+import { ICLIConnectionCredentials, ITableSettings } from '../../interfaces/interfaces';
 import { IDaoInterface, ITestConnectResult } from '../shared/dao-interface';
 import { knex } from 'knex';
 import {
@@ -14,9 +14,9 @@ import {
 } from '../../helpers';
 
 export class DaoOracledb implements IDaoInterface {
-  private readonly connection: IConnection;
+  private readonly connection: ICLIConnectionCredentials;
 
-  constructor(connection: IConnection) {
+  constructor(connection: ICLIConnectionCredentials) {
     this.connection = connection;
   }
 
@@ -67,8 +67,8 @@ export class DaoOracledb implements IDaoInterface {
           .transaction((trx) => {
             knex
               .raw(
-                `insert INTO ${tableName} (${keys.map((_) => '??').join(', ')}) VALUES
-                     (${values.map((_) => '?').join(', ')})`,
+                `insert INTO ${tableName} (${keys.map((_) => '??').join(', ')})
+                 VALUES (${values.map((_) => '?').join(', ')})`,
                 [...keys, ...values],
               )
               .transacting(trx)
@@ -78,9 +78,12 @@ export class DaoOracledb implements IDaoInterface {
           .catch((e) => {
             throw new Error(e);
           });
-        result = {
-          [primaryKey.column_name]: row[primaryKey.column_name],
-        };
+        const primaryKeys = primaryColumns.map((column) => column.column_name);
+        const resultsArray = [];
+        for (let i = 0; i < primaryKeys.length; i++) {
+          resultsArray.push([primaryKeys[i], row[primaryKeys[i]]]);
+        }
+        result = Object.fromEntries(resultsArray);
       }
     } else {
       result = await knex
@@ -319,11 +322,11 @@ export class DaoOracledb implements IDaoInterface {
 
 //***********************************************************************************
   // configuration for Oracle differs from configuration for other databases
-  configureKnex(connectionConfig: IConnection) {
+  configureKnex(connectionConfig: ICLIConnectionCredentials) {
     return DaoOracledb.configureKnex(connectionConfig);
   }
 
-  public static configureKnex(connectionConfig: IConnection) {
+  public static configureKnex(connectionConfig: ICLIConnectionCredentials) {
     const { host, username, password, database, port, type, sid, ssl, cert } = connectionConfig;
     const cachedKnex = Cacher.getCachedKnex(connectionConfig);
     if (cachedKnex) {
