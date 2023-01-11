@@ -307,7 +307,7 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
           password: password,
           database: database,
           port: port,
-          ssl: ssl ? { ca: cert } : { rejectUnauthorized: false },
+          ssl: ssl ? { ca: cert ?? undefined, rejectUnauthorized: !cert } : false,
         },
       });
       Cacher.setKnexCache(connectionConfig, newKnex);
