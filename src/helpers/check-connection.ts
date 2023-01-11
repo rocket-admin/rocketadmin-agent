@@ -9,7 +9,7 @@ export async function checkConnection(connection: ICLIConnectionCredentials): Pr
   if (result.result) {
     console.log('-> Database successfully connected');
   } else {
-    console.log('-> Connection to database failed');
+    console.log(`-> Connection to database failed with error: ${result.message ? result.message : 'unknown error'}`);
   }
   return result;
 }
