@@ -164,7 +164,11 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
         const { search_fields } = settings;
         if (search_fields && searchedFieldValue && search_fields.length > 0) {
           for (const field of search_fields) {
-            builder.orWhereRaw(` CAST (?? AS CHAR (255))=?`, [field, searchedFieldValue]);
+            if (Buffer.isBuffer(searchedFieldValue)) {
+              builder.orWhere(field, '=', searchedFieldValue);
+            } else {
+              builder.orWhereRaw(` CAST (?? AS CHAR (255))=?`, [field, searchedFieldValue]);
+            }
           }
         }
         /*eslint-enable*/

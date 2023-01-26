@@ -216,10 +216,18 @@ export class DaoOracledb implements IDaoInterface {
       const searchedFieldsKeyValArr = [];
       if (searchedFields && searchedFields.length > 0 && searchedFieldValue) {
         for (let i = 0; i < searchedFields.length; i++) {
-          if (i === 0) {
-            andWhere += ` WHERE CAST (?? AS VARCHAR (255))=?`;
+          if (Buffer.isBuffer(searchedFieldValue)) {
+            if (i === 0) {
+              andWhere += ` WHERE ??=?`;
+            } else {
+              andWhere += ` OR ??=?`;
+            }
           } else {
-            andWhere += ` OR CAST (?? AS VARCHAR (255))=?`;
+            if (i === 0) {
+              andWhere += ` WHERE CAST (?? AS VARCHAR (255))=?`;
+            } else {
+              andWhere += ` OR CAST (?? AS VARCHAR (255))=?`;
+            }
           }
           searchedFieldsKeyValArr.push(searchedFields[i], searchedFieldValue);
         }
