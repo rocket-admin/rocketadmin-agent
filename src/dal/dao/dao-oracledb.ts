@@ -158,6 +158,7 @@ export class DaoOracledb implements IDaoInterface {
       return {
         data: rows,
         pagination: {},
+        large_dataset: false,
       };
     }
 
@@ -189,94 +190,150 @@ export class DaoOracledb implements IDaoInterface {
     } else {
       order = QueryOrderingEnum.ASC;
     }
-    tableName = this.attachSchemaNameToTableName(tableName);
-    return await getAvailableFieldsWithPagination(
-      tableName,
-      page,
-      perPage,
-      availableFields,
-      orderingField,
-      order,
-      searchedFields,
-      searchedFieldValue,
-      filteringFields,
+    const tableSchema = this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase();
+    return await newGetAvailableFieldsWithPagination(
+        tableName,
+        tableSchema,
+        page,
+        perPage,
+        availableFields,
+        orderingField,
+        order,
+        searchedFields,
+        searchedFieldValue,
+        filteringFields,
     );
 
-    async function getAvailableFieldsWithPagination
-    (tableName: string,
-     page: number,
-     perPage: number,
-     availableFields: Array<string>,
-     orderingField: string,
-     order = QueryOrderingEnum.ASC,
-     searchedFields: Array<string>,
-     searchedFieldValue: any,
-     filteringFields = []) {
-      let andWhere = '';
-      const searchedFieldsKeyValArr = [];
-      if (searchedFields && searchedFields.length > 0 && searchedFieldValue) {
-        for (let i = 0; i < searchedFields.length; i++) {
-          if (Buffer.isBuffer(searchedFieldValue)) {
-            if (i === 0) {
-              andWhere += ` WHERE ??=?`;
-            } else {
-              andWhere += ` OR ??=?`;
+    async function newGetAvailableFieldsWithPagination(
+        tableName: string,
+        tableSchema: string,
+        page: number,
+        perPage: number,
+        availableFields: Array<string>,
+        orderingField: string,
+        order = QueryOrderingEnum.ASC,
+        searchedFields: Array<string>,
+        searchedFieldValue: any,
+        filteringFields: any,
+    ): Promise<any> {
+      const offset = (page - 1) * perPage;
+      const rows = await knex(tableName)
+          .withSchema(tableSchema)
+          .select(availableFields)
+          .modify((builder) => {
+            const search_fields = searchedFields;
+            if (searchedFieldValue && search_fields.length > 0) {
+              for (const field of search_fields) {
+                if (Buffer.isBuffer(searchedFieldValue)) {
+                  builder.orWhere(field, '=', searchedFieldValue);
+                } else {
+                  builder.orWhereRaw(` CAST (?? AS VARCHAR (255))=?`, [field, searchedFieldValue]);
+                }
+              }
             }
+          })
+          .modify((builder) => {
+            if (filteringFields && filteringFields.length > 0) {
+              for (const filterObject of filteringFields) {
+                const { field, criteria, value } = filterObject;
+                switch (criteria) {
+                  case FilterCriteriaEnum.eq:
+                    builder.andWhere(field, '=', `${value}`);
+                    break;
+                  case FilterCriteriaEnum.startswith:
+                    builder.andWhere(field, 'like', `${value}%`);
+                    break;
+                  case FilterCriteriaEnum.endswith:
+                    builder.andWhere(field, 'like', `%${value}`);
+                    break;
+                  case FilterCriteriaEnum.gt:
+                    builder.andWhere(field, '>', value);
+                    break;
+                  case FilterCriteriaEnum.lt:
+                    builder.andWhere(field, '<', value);
+                    break;
+                  case FilterCriteriaEnum.lte:
+                    builder.andWhere(field, '<=', value);
+                    break;
+                  case FilterCriteriaEnum.gte:
+                    builder.andWhere(field, '>=', value);
+                    break;
+                  case FilterCriteriaEnum.contains:
+                    builder.andWhere(field, 'like', `%${value}%`);
+                    break;
+                  case FilterCriteriaEnum.icontains:
+                    builder.andWhereNot(field, 'like', `%${value}%`);
+                    break;
+                  case FilterCriteriaEnum.empty:
+                    builder.orWhereNull(field);
+                    builder.orWhere(field, '=', `''`);
+                    break;
+                }
+              }
+            }
+          })
+          .modify((builder) => {
+            if (settings.ordering_field && settings.ordering) {
+              builder.orderBy(settings.ordering_field, settings.ordering);
+            }
+          })
+          .limit(perPage)
+          .offset(offset);
+      const { rowsCount, large_dataset } = await getRowsCount(knex, tableName, tableSchema);
+      const lastPage = Math.ceil(rowsCount / perPage);
+      return {
+        data: rows.map((row) => {
+          delete row['ROWNUM_'];
+          return row;
+        }),
+        pagination: {
+          total: rowsCount,
+          lastPage: lastPage,
+          perPage: perPage,
+          currentPage: page,
+        },
+        large_dataset: large_dataset,
+      };
+    }
+
+    async function getRowsCount(
+        knex,
+        tableName: string,
+        tableSchema: string,
+    ): Promise<{ rowsCount: number; large_dataset: boolean }> {
+      async function countWithTimeout() {
+        return new Promise(async function (resolve, reject) {
+          setTimeout(() => {
+            resolve(null);
+          }, 2000);
+          const count = (await knex(tableName).withSchema(tableSchema).count('*')) as any;
+          const rowsCount = parseInt(count[0]['COUNT(*)']);
+          if (rowsCount) {
+            resolve(rowsCount);
           } else {
-            if (i === 0) {
-              andWhere += ` WHERE CAST (?? AS VARCHAR (255))=?`;
-            } else {
-              andWhere += ` OR CAST (?? AS VARCHAR (255))=?`;
-            }
+            resolve(false);
           }
-          searchedFieldsKeyValArr.push(searchedFields[i], searchedFieldValue);
-        }
+        });
       }
-      const filteringFieldsKeysValues = [];
-      for (const filteringField of filteringFields) {
-        const { field, value } = filteringField;
-        filteringFieldsKeysValues.push(field, value);
-      }
-      const filterWhere = DaoOracledb.buildFilterWhere(filteringFields, andWhere);
-      const result = await knex.transaction(trx => {
-        knex.raw(`WITH RECORDSET AS (
-          SELECT ${availableFields.map(_ => '??').join(', ')}
-          FROM ${tableName} ${andWhere ? andWhere : ''} ${filterWhere ? filterWhere : ''}
-          ),
-          NUMBERED AS (SELECT ROW_NUMBER() OVER (ORDER BY ?? ${order} ) RN, RECORDSET.* FROM RECORDSET)
-          SELECT ${page} PAGE_NUMBER, CEIL((SELECT COUNT(*) FROM NUMBERED) / ${perPage}) TOTAL_PAGES,
-          ${perPage} PAGE_SIZE,
-          (SELECT COUNT(*) FROM NUMBERED) TOTAL_ROWS, NUMBERED.* FROM NUMBERED
-          WHERE RN BETWEEN ((${perPage}*${page})-${perPage}+1) AND (${perPage}*${page})
-          `, [...availableFields, ...searchedFieldsKeyValArr, ...filteringFieldsKeysValues, orderingField],
-        ).transacting(trx).then(trx.commit).catch(trx.rollback);
-      });
-      if (!result[0]) {
+
+      const firstCount = (await countWithTimeout()) as number;
+      if (firstCount) {
         return {
-          data: [],
-          pagination: {},
+          rowsCount: firstCount,
+          large_dataset: false,
         };
       } else {
-        const { PAGE_NUMBER, TOTAL_PAGES, PAGE_SIZE, TOTAL_ROWS } = result[0];
-        const pureRows = result.map((el) => {
-          delete el.PAGE_NUMBER;
-          delete el.TOTAL_PAGES;
-          delete el.PAGE_SIZE;
-          delete el.TOTAL_ROWS;
-          delete el.RN;
-          return el;
-        });
+        const secondCount = await knex('ALL_TABLES')
+            .select('NUM_ROWS')
+            .where('TABLE_NAME', '=', tableName)
+            .andWhere('OWNER', '=', tableSchema);
         return {
-          data: pureRows,
-          pagination: {
-            total: TOTAL_ROWS,
-            lastPage: TOTAL_PAGES,
-            perPage: PAGE_SIZE,
-            currentPage: PAGE_NUMBER,
-          },
+          rowsCount: secondCount[0]['NUM_ROWS'],
+          large_dataset: true,
         };
       }
     }
+
   }
 
   async getTablesFromDB() {
