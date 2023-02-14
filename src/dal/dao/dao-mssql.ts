@@ -237,6 +237,10 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
               case FilterCriteriaEnum.icontains:
                 builder.andWhereNot(field, 'like', `%${value}%`);
                 break;
+              case FilterCriteriaEnum.empty:
+                builder.orWhereNull(field);
+                builder.orWhere(field, '=', `''`);
+                break;
             }
           }
         }
