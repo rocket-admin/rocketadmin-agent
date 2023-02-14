@@ -113,16 +113,15 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
     if (!page || page <= 0) {
       page = Constants.DEFAULT_PAGINATION.page;
       const { list_per_page } = settings;
-      if ((list_per_page && list_per_page > 0) && (!perPage || perPage <= 0)) {
+      if (list_per_page && list_per_page > 0 && (!perPage || perPage <= 0)) {
         perPage = list_per_page;
       } else {
         perPage = Constants.DEFAULT_PAGINATION.perPage;
       }
     }
     const knex = await this.configureKnex(this.connection);
-    const count = await knex(tableName).count('*');
-    const rowsCount = count[0]['count(*)'] as number;
-    const lastPage = Math.ceil((rowsCount) / perPage);
+    const { rowsCount, large_dataset } = await this.getRowsCount(knex, tableName, this.connection.database);
+    const lastPage = Math.ceil(rowsCount / perPage);
     /* eslint-enable */
 
     const availableFields = await this.findAvaliableFields(settings, tableName);
@@ -152,6 +151,7 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
       rowsRO = {
         data: rows,
         pagination: {},
+        large_dataset: large_dataset,
       };
 
       return rowsRO;
@@ -230,6 +230,7 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
     rowsRO = {
       data,
       pagination,
+      large_dataset: large_dataset,
     };
 
     return rowsRO;
@@ -438,5 +439,36 @@ export class DaoMysql extends BasicDao implements IDaoInterface {
       }
     }
     return availableFields;
+  }
+
+  private async getRowsCount(
+    knex: any,
+    tableName: string,
+    database: string,
+  ): Promise<{ rowsCount: number; large_dataset: boolean }> {
+    async function countWithTimeout() {
+      return new Promise(async function (resolve, reject) {
+        setTimeout(() => {
+          resolve(null);
+        }, Constants.COUNT_QUERY_TIMEOUT_MS);
+        const count = await knex(tableName).count('*');
+        const rowsCount = count[0]['count(*)'] as number;
+        if (rowsCount) {
+          resolve(rowsCount);
+        } else {
+          resolve(false);
+        }
+      });
+    }
+
+    const firstCount = (await countWithTimeout()) as number;
+    if (firstCount) {
+      return { rowsCount: firstCount, large_dataset: false };
+    } else {
+      const secondCount = parseInt(
+        (await knex.raw(`SHOW TABLE STATUS IN ?? LIKE ?;`, [database, tableName]))[0][0].Rows,
+      );
+      return { rowsCount: secondCount, large_dataset: true };
+    }
   }
 }

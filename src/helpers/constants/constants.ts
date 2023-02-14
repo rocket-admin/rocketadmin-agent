@@ -1,6 +1,7 @@
 export const Constants = {
   FORBIDDEN_HOSTS: ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', 'fd00::/8'],
-
+  COUNT_QUERY_TIMEOUT_MS: 2000,
+  LARGE_DATASET_SIZE: 100000,
   DEFAULT_PAGINATION: { page: 1, perPage: 20 },
   DEFAULT_LOGS_DIRNAME: 'logs',
   DEFAULT_LOGS_FILENAME: 'autoadmin-logs.txt',

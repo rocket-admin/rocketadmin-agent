@@ -105,11 +105,9 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
         perPage = Constants.DEFAULT_PAGINATION.perPage;
       }
     }
+    const tableSchema = this.connection.schema ? this.connection.schema : 'public';
     const knex = await this.configureKnex(this.connection);
-    const count = await knex(tableName)
-      .withSchema(this.connection.schema ? this.connection.schema : 'public')
-      .count('*');
-    const rowsCount = parseInt(count[0].count);
+    const { rowsCount, large_dataset } = await this.getRowsCount(knex, tableName, tableSchema);
     const lastPage = Math.ceil(rowsCount / perPage);
     /* eslint-enable */
     const availableFields = await this.findAvaliableFields(settings, tableName);
@@ -141,6 +139,7 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
       rowsRO = {
         data: rows,
         pagination: {},
+        large_dataset: large_dataset,
       };
 
       return rowsRO;
@@ -219,6 +218,7 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
     rowsRO = {
       data,
       pagination,
+      large_dataset: large_dataset,
     };
     return rowsRO;
   }
@@ -487,5 +487,52 @@ export class DaoPostgres extends BasicDao implements IDaoInterface {
 
   static async clearKnexCache() {
     await Cacher.clearKnexCache();
+  }
+
+  private async getRowsCount(
+    knex: any,
+    tableName: string,
+    tableSchema: string,
+  ): Promise<{ rowsCount: number; large_dataset: boolean }> {
+    async function countWithTimeout() {
+      return new Promise(async function (resolve, reject) {
+        setTimeout(() => {
+          resolve(null);
+        }, Constants.COUNT_QUERY_TIMEOUT_MS);
+        const count = (await knex(tableName).withSchema(tableSchema).count('*')) as any;
+        const rowsCount = parseInt(count[0].count);
+        if (rowsCount) {
+          resolve(rowsCount);
+        } else {
+          resolve(false);
+        }
+      });
+    }
+
+    const firstCount = (await countWithTimeout()) as number;
+    if (firstCount === 0) {
+      return { rowsCount: 0, large_dataset: false };
+    }
+    if (firstCount) {
+      return { rowsCount: firstCount, large_dataset: false };
+    } else {
+      try {
+        const result = await knex.raw(
+          `
+    SELECT ((reltuples / relpages)
+    * (pg_relation_size('??.??') / current_setting('block_size')::int)
+           )::bigint as count
+FROM   pg_class
+WHERE  oid = '??.??'::regclass;`,
+          [tableSchema, tableName, tableSchema, tableName],
+        );
+        return {
+          rowsCount: result,
+          large_dataset: true,
+        };
+      } catch (e) {
+        return { rowsCount: 0, large_dataset: false };
+      }
+    }
   }
 }

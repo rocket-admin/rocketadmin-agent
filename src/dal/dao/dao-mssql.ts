@@ -110,7 +110,7 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
     if (!page || page <= 0) {
       page = Constants.DEFAULT_PAGINATION.page;
       const { list_per_page } = settings;
-      if ((list_per_page && list_per_page > 0) && (!perPage || perPage <= 0)) {
+      if (list_per_page && list_per_page > 0 && (!perPage || perPage <= 0)) {
         perPage = list_per_page;
       } else {
         perPage = Constants.DEFAULT_PAGINATION.perPage;
@@ -148,7 +148,7 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
       }
     }
 
-    const lastPage = Math.ceil((rowsCount) / perPage);
+    const lastPage = Math.ceil(rowsCount / perPage);
     /* eslint-enable */
     let rowsRO;
     if (
@@ -175,6 +175,7 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
       rowsRO = {
         data: rows,
         pagination: {},
+        large_dataset: rowsCount >= Constants.LARGE_DATASET_SIZE,
       };
 
       return rowsRO;
@@ -257,6 +258,7 @@ export class DaoMssql extends BasicDao implements IDaoInterface {
     rowsRO = {
       data,
       pagination,
+      large_dataset: rowsCount >= Constants.LARGE_DATASET_SIZE,
     };
     return rowsRO;
   }

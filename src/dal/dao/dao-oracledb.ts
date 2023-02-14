@@ -158,6 +158,7 @@ export class DaoOracledb implements IDaoInterface {
       return {
         data: rows,
         pagination: {},
+        large_dataset: false,
       };
     }
 
@@ -165,14 +166,14 @@ export class DaoOracledb implements IDaoInterface {
     if (!page || page <= 0) {
       page = Constants.DEFAULT_PAGINATION.page;
       const { list_per_page } = settings;
-      if ((list_per_page && list_per_page > 0) && (!perPage || perPage <= 0)) {
+      if (list_per_page && list_per_page > 0 && (!perPage || perPage <= 0)) {
         perPage = list_per_page;
       } else {
         perPage = Constants.DEFAULT_PAGINATION.perPage;
       }
     }
     const availableFields = await this.findAvaliableFields(settings, tableName);
-//********** with pagination ************
+    //********** with pagination ************
     let orderingField = undefined;
     let order = undefined;
     let searchedFields = undefined;
@@ -202,16 +203,17 @@ export class DaoOracledb implements IDaoInterface {
       filteringFields,
     );
 
-    async function getAvailableFieldsWithPagination
-    (tableName: string,
-     page: number,
-     perPage: number,
-     availableFields: Array<string>,
-     orderingField: string,
-     order = QueryOrderingEnum.ASC,
-     searchedFields: Array<string>,
-     searchedFieldValue: any,
-     filteringFields = []) {
+    async function getAvailableFieldsWithPagination(
+      tableName: string,
+      page: number,
+      perPage: number,
+      availableFields: Array<string>,
+      orderingField: string,
+      order = QueryOrderingEnum.ASC,
+      searchedFields: Array<string>,
+      searchedFieldValue: any,
+      filteringFields = [],
+    ) {
       let andWhere = '';
       const searchedFieldsKeyValArr = [];
       if (searchedFields && searchedFields.length > 0 && searchedFieldValue) {
@@ -238,9 +240,11 @@ export class DaoOracledb implements IDaoInterface {
         filteringFieldsKeysValues.push(field, value);
       }
       const filterWhere = DaoOracledb.buildFilterWhere(filteringFields, andWhere);
-      const result = await knex.transaction(trx => {
-        knex.raw(`WITH RECORDSET AS (
-          SELECT ${availableFields.map(_ => '??').join(', ')}
+      const result = await knex.transaction((trx) => {
+        knex
+          .raw(
+            `WITH RECORDSET AS (
+          SELECT ${availableFields.map((_) => '??').join(', ')}
           FROM ${tableName} ${andWhere ? andWhere : ''} ${filterWhere ? filterWhere : ''}
           ),
           NUMBERED AS (SELECT ROW_NUMBER() OVER (ORDER BY ?? ${order} ) RN, RECORDSET.* FROM RECORDSET)
@@ -248,13 +252,18 @@ export class DaoOracledb implements IDaoInterface {
           ${perPage} PAGE_SIZE,
           (SELECT COUNT(*) FROM NUMBERED) TOTAL_ROWS, NUMBERED.* FROM NUMBERED
           WHERE RN BETWEEN ((${perPage}*${page})-${perPage}+1) AND (${perPage}*${page})
-          `, [...availableFields, ...searchedFieldsKeyValArr, ...filteringFieldsKeysValues, orderingField],
-        ).transacting(trx).then(trx.commit).catch(trx.rollback);
+          `,
+            [...availableFields, ...searchedFieldsKeyValArr, ...filteringFieldsKeysValues, orderingField],
+          )
+          .transacting(trx)
+          .then(trx.commit)
+          .catch(trx.rollback);
       });
       if (!result[0]) {
         return {
           data: [],
           pagination: {},
+          large_dataset: false,
         };
       } else {
         const { PAGE_NUMBER, TOTAL_PAGES, PAGE_SIZE, TOTAL_ROWS } = result[0];
@@ -274,29 +283,35 @@ export class DaoOracledb implements IDaoInterface {
             perPage: PAGE_SIZE,
             currentPage: PAGE_NUMBER,
           },
+          large_dataset: pureRows.length >= Constants.LARGE_DATASET_SIZE,
         };
       }
     }
   }
 
   async getTablesFromDB() {
-    const schema = this.connection.schema ? this.connection.schema : (this.connection.username).toUpperCase();
+    const schema = this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase();
     return await listTables(this.configureKnex(this.connection), schema);
   }
 
-//***********************************************************************************
+  //***********************************************************************************
   async getTablePrimaryColumns(tableName: string) {
     const knex = await this.configureKnex(this.connection);
-    const schema = this.connection.schema ? this.connection.schema : (this.connection.username).toUpperCase();
+    const schema = this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase();
     const primaryColumns = await knex(tableName)
       .select(knex.raw('cols.column_name'))
       .from(knex.raw('all_constraints cons, all_cons_columns cols'))
-      .where(knex.raw(`cols.table_name = ?
+      .where(
+        knex.raw(
+          `cols.table_name = ?
       AND cols.owner = ?
       AND cons.constraint_type = 'P'
       AND cons.constraint_name = cols.constraint_name
       AND cons.owner = cols.owner   
-      `, [tableName, schema]));
+      `,
+          [tableName, schema],
+        ),
+      );
     const primaryColumnsInLowercase = [];
     for (const primaryColumn of primaryColumns) {
       primaryColumnsInLowercase.push(objectKeysToLowercase(primaryColumn));
@@ -305,13 +320,9 @@ export class DaoOracledb implements IDaoInterface {
   }
 
   async getTableStructure(tableName: string) {
-    const schema = this.connection.schema ? this.connection.schema : (this.connection.username).toUpperCase();
-    const structureColumns = await this.configureKnex(this.connection).select(
-      'COLUMN_NAME',
-      'DATA_DEFAULT',
-      'DATA_TYPE',
-      'NULLABLE',
-      'DATA_LENGTH')
+    const schema = this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase();
+    const structureColumns = await this.configureKnex(this.connection)
+      .select('COLUMN_NAME', 'DATA_DEFAULT', 'DATA_TYPE', 'NULLABLE', 'DATA_LENGTH')
       .from('ALL_TAB_COLUMNS')
       .where(`TABLE_NAME`, `${tableName}`)
       .andWhere(`OWNER`, `${schema}`);
@@ -319,16 +330,15 @@ export class DaoOracledb implements IDaoInterface {
     const structureColumnsInLowercase = [];
     for (const structureColumn of structureColumns) {
       renameObjectKeyName(structureColumn, 'DATA_DEFAULT', 'column_default');
-      structureColumn.NULLABLE = (structureColumn.NULLABLE === 'Y');
+      structureColumn.NULLABLE = structureColumn.NULLABLE === 'Y';
       renameObjectKeyName(structureColumn, 'NULLABLE', 'allow_null');
       renameObjectKeyName(structureColumn, 'DATA_LENGTH', 'character_maximum_length');
       structureColumnsInLowercase.push(objectKeysToLowercase(structureColumn));
     }
     return structureColumnsInLowercase;
-
   }
 
-//***********************************************************************************
+  //***********************************************************************************
   // configuration for Oracle differs from configuration for other databases
   configureKnex(connectionConfig: ICLIConnectionCredentials) {
     return DaoOracledb.configureKnex(connectionConfig);
@@ -375,19 +385,16 @@ export class DaoOracledb implements IDaoInterface {
       }
     }
     tableName = this.attachSchemaNameToTableName(tableName);
-    return await knex.transaction(trx => {
-      knex.raw(`UPDATE ${tableName} ${setString} ${whereString}`)
-        .transacting(trx)
-        .then(trx.commit)
-        .catch(trx.rollback);
+    return await knex.transaction((trx) => {
+      knex.raw(`UPDATE ${tableName} ${setString} ${whereString}`).transacting(trx).then(trx.commit).catch(trx.rollback);
     });
   }
 
   async getTableForeignKeys(tableName: string) {
     const knex = await this.configureKnex(this.connection);
-    const schema = this.connection.schema ? this.connection.schema : (this.connection.username).toUpperCase();
-    const foreignKeys = await knex
-      .raw(`SELECT a.constraint_name, a.table_name, a.column_name,  c.owner,
+    const schema = this.connection.schema ? this.connection.schema : this.connection.username.toUpperCase();
+    const foreignKeys = await knex.raw(
+      `SELECT a.constraint_name, a.table_name, a.column_name,  c.owner,
        c_pk.table_name r_table_name,  b.column_name r_column_name
        FROM user_cons_columns a
        JOIN user_constraints c ON a.owner = c.owner
@@ -396,7 +403,9 @@ export class DaoOracledb implements IDaoInterface {
        AND c.r_constraint_name = c_pk.constraint_name
        JOIN user_cons_columns b ON C_PK.owner = b.owner
        AND  C_PK.CONSTRAINT_NAME = b.constraint_name AND b.POSITION = a.POSITION
-       WHERE c.constraint_type = 'R' AND a.table_name = ? AND a.OWNER = ?`, [tableName, schema]);
+       WHERE c.constraint_type = 'R' AND a.table_name = ? AND a.OWNER = ?`,
+      [tableName, schema],
+    );
 
     const transformedForeignKeys = [];
     for (const foreignKey of foreignKeys) {
