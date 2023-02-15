@@ -301,37 +301,17 @@ export class DaoOracledb implements IDaoInterface {
         tableName: string,
         tableSchema: string,
     ): Promise<{ rowsCount: number; large_dataset: boolean }> {
-      async function countWithTimeout() {
-        return new Promise(async function (resolve, reject) {
-          setTimeout(() => {
-            resolve(null);
-          }, 2000);
-          const count = (await knex(tableName).withSchema(tableSchema).count('*')) as any;
-          const rowsCount = parseInt(count[0]['COUNT(*)']);
-          if (rowsCount) {
-            resolve(rowsCount);
-          } else {
-            resolve(false);
-          }
-        });
+      const fastCountQueryResult = await knex('ALL_TABLES')
+          .select('NUM_ROWS')
+          .where('TABLE_NAME', '=', tableName)
+          .andWhere('OWNER', '=', tableSchema);
+      const fastCount = fastCountQueryResult[0]['NUM_ROWS'];
+      if (fastCount >= Constants.LARGE_DATASET_SIZE) {
+        return { rowsCount: fastCount, large_dataset: true };
       }
-
-      const firstCount = (await countWithTimeout()) as number;
-      if (firstCount) {
-        return {
-          rowsCount: firstCount,
-          large_dataset: false,
-        };
-      } else {
-        const secondCount = await knex('ALL_TABLES')
-            .select('NUM_ROWS')
-            .where('TABLE_NAME', '=', tableName)
-            .andWhere('OWNER', '=', tableSchema);
-        return {
-          rowsCount: secondCount[0]['NUM_ROWS'],
-          large_dataset: true,
-        };
-      }
+      const count = (await knex(tableName).withSchema(tableSchema).count('*')) as any;
+      const rowsCount = parseInt(count[0]['COUNT(*)']);
+      return { rowsCount: rowsCount, large_dataset: false };
     }
 
   }
