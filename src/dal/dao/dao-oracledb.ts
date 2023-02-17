@@ -587,6 +587,7 @@ export class DaoOracledb implements IDaoInterface {
 
   async testConnect(): Promise<ITestConnectResult> {
     const knex = this.configureKnex(this.connection);
+    let result;
     try {
       result = await knex
       .transaction((trx) => {
