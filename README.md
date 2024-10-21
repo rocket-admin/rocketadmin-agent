@@ -9,9 +9,9 @@ Open Terminal app and run following commands:
 
 ```bash
 
-docker pull autoadmin/agent
+docker pull rocketadmin/rocketadmin-agent
 docker run -e CONNECTION_TOKEN=connection_token -e CONNECTION_TYPE=mysql -e CONNECTION_USERNAME=your_username \
-    -e CONNECTION_PASSWORD=your_password -e CONNECTION_HOST=example.com autoadmin/agent
+    -e CONNECTION_PASSWORD=your_password -e CONNECTION_HOST=example.com rocketadmin/rocketadmin-agent
 ```
 
 ## Install via Docker Compose
